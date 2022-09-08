@@ -13,6 +13,7 @@ setup(name="enstools-compression",
 
       install_requires=[
           "enstools @ git+https://gitlab.physik.uni-muenchen.de/w2w/enstools.git@compression",
+          "enstools-encoding @ git+https://gitlab.physik.uni-muenchen.de/w2w/enstools-encoding.git"
           "zfpy",
       ],
       )
