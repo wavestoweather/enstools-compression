@@ -12,6 +12,7 @@ setup(name="enstools-compression",
       namespace_packages=['enstools'],
 
       install_requires=[
-          "enstools @ git+https://gitlab.physik.uni-muenchen.de/w2w/enstools.git"
+          "enstools @ git+https://gitlab.physik.uni-muenchen.de/w2w/enstools.git@compression",
+          "zfpy",
       ],
       )
