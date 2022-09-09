@@ -9,7 +9,7 @@ from os import rename, access, W_OK
 from os.path import isfile, isdir
 from typing import Union, List
 
-from enstools.io.compression.emulation import emulate_compression_on_dataset
+from enstools.compression.emulation import emulate_compression_on_dataset
 
 
 def drop_variables(dataset, variables_to_keep: list):

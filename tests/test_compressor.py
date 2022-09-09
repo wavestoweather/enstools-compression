@@ -2,7 +2,6 @@ from os.path import isfile, join
 
 import pytest
 
-from enstools.core.errors import EnstoolsError, WrongCompressionModeError
 from enstools.encoding import check_sz_availability, check_libpressio_availability
 
 
@@ -66,6 +65,7 @@ folders = None
 
 
 def wrapper(cls, compression=None):
+    import enstools.compression
     import enstools.io
     input_tempdir = cls.input_tempdir
     output_tempdir = cls.output_tempdir
@@ -75,7 +75,7 @@ def wrapper(cls, compression=None):
         input_path = join(input_tempdir.getpath(), ds)
         output_path = output_tempdir.getpath()
         # Import and launch compress function
-        enstools.io.compress([input_path], output_path, compression=compression, nodes=0)
+        enstools.compression.compress([input_path], output_path, compression=compression, nodes=0)
 
         # Check that the output file can be loaded
         with enstools.io.read(join(output_path, ds)) as ds_out:
@@ -118,7 +118,7 @@ class TestClass:
             assert isfile(join(tempdir_path, ds))
 
     def test_analyzer(self):
-        from enstools.io import analyze
+        from enstools.compression import analyze
         input_tempdir = self.input_tempdir
         # Check that the compression without specifying compression parameters works
         datasets = ["dataset_%iD.nc" % dimension for dimension in range(1, 4)]
@@ -127,7 +127,7 @@ class TestClass:
             analyze(file_paths=[input_path])
 
     def test_zfp_analyzer(self):
-        from enstools.io import analyze
+        from enstools.compression import analyze
         input_tempdir = self.input_tempdir
         # Check that the compression without specifying compression parameters works
         datasets = ["dataset_%iD.nc" % dimension for dimension in range(1, 4)]
@@ -139,7 +139,7 @@ class TestClass:
         """
         This tests checks that we can find compression parameters to fulfill a certain compression ratio.
         """
-        from enstools.io import analyze
+        from enstools.compression import analyze
         # The resulting compression ratio should be within this tolerance.
         TOLERANCE = 1
         cr_label = "compression_ratio"
@@ -160,7 +160,7 @@ class TestClass:
 
     @pytest.mark.skipif(not check_libpressio_availability(), reason="Requires libpressio")
     def test_sz_analyzer(self):
-        from enstools.io import analyze
+        from enstools.compression import analyze
         input_tempdir = self.input_tempdir
         # Check that the compression without specifying compression parameters works
         datasets = ["dataset_%iD.nc" % dimension for dimension in range(1, 4)]
@@ -246,7 +246,7 @@ class TestClass:
         wrapper(self, compression=compression)
 
     def test_compress_ratios_lossy(self):
-        from enstools.io import compress
+        from enstools.compression import compress
         input_tempdir = self.input_tempdir
         output_tempdir = self.output_tempdir
         # Check that compression works when specifying compression = lossy:sz
@@ -262,7 +262,7 @@ class TestClass:
             assert initial_size > final_size
 
     def test_compress_ratios_lossless(self):
-        from enstools.io import compress
+        from enstools.compression import compress
         # Check that compression works when specifying compression = lossy:sz
         input_tempdir = self.input_tempdir
         output_tempdir = self.output_tempdir
@@ -292,7 +292,7 @@ class TestClass:
         assert check_zfp_availability
 
     def test_specify_single_file_output_name(self):
-        from enstools.io import compress
+        from enstools.compression import compress
         input_tempdir = self.input_tempdir
         output_tempdir = self.output_tempdir
         # Check that the compression without specifying compression parameters works
@@ -304,7 +304,7 @@ class TestClass:
             compress([input_path], output_filename, compression="lossless", nodes=0)
 
     def test_compress_single_file(self):
-        from enstools.io import compress
+        from enstools.compression import compress
         input_tempdir = self.input_tempdir
         output_tempdir = self.output_tempdir
         # Check that the compression without specifying compression parameters works
@@ -316,7 +316,7 @@ class TestClass:
             compress(input_path, output_filename, compression="lossless", nodes=0)
 
     def test_significant_bits_analysis(self):
-        from enstools.io.compression.significant_bits import analyze_file_significant_bits
+        from enstools.compression.significant_bits import analyze_file_significant_bits
         input_tempdir = self.input_tempdir
         # Check that the compression without specifying compression parameters works
         datasets = ["dataset_%iD.nc" % dimension for dimension in range(3, 4)]
@@ -326,7 +326,7 @@ class TestClass:
             analyze_file_significant_bits(input_path)
 
     def test_prune(self):
-        from enstools.io.compression.pruner import pruner
+        from enstools.compression.pruner import pruner
         input_tempdir = self.input_tempdir
         output_tempdir = self.output_tempdir
         datasets = ["dataset_%iD.nc" % dimension for dimension in range(3, 4)]
@@ -338,7 +338,7 @@ class TestClass:
     @pytest.mark.skipif(not check_libpressio_availability(), reason="Requires libpressio")
     def test_emulation(self):
         from enstools.io import read
-        from enstools.io.compression.emulation import emulate_compression_on_dataset
+        from enstools.compression.emulation import emulate_compression_on_dataset
         input_tempdir = self.input_tempdir
         output_tempdir = self.output_tempdir
         datasets = ["dataset_%iD.nc" % dimension for dimension in range(3, 4)]

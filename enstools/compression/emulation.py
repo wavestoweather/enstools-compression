@@ -61,7 +61,7 @@ def emulate_compression_on_numpy_array(data: numpy.ndarray, compression_specific
 
     if compression_specification.compressor in [Compressors.BLOSC, Compressors.NONE]:
         return data, {}
-    from enstools.io.compression.analyzer.LibpressioAnalysisCompressor import compressor_configuration
+    from enstools.compression.analyzer.LibpressioAnalysisCompressor import compressor_configuration
     try:
         from libpressio import PressioCompressor
     except ModuleNotFoundError as err:

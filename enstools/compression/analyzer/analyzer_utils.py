@@ -4,9 +4,9 @@ import numpy as np
 import xarray
 
 from enstools.core.errors import EnstoolsError
-from enstools.io.compression.analyzer.AnalysisOptions import AnalysisOptions
+from enstools.compression.analyzer.AnalysisOptions import AnalysisOptions
 from enstools.encoding import Compressors, CompressionModes
-from enstools.io.compression.metrics import DataArrayMetrics
+from enstools.compression.metrics import DataArrayMetrics
 
 
 def get_metrics(reference_data: xarray.DataArray, recovered_data: xarray.DataArray, metric_names: List[str],

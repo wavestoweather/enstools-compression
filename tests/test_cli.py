@@ -102,7 +102,7 @@ class TestClass:
         """
         Check that the cli prints the help and exists.
         """
-        import enstools.io
+        import enstools.compression
         commands = ["_", "-h"]
         mocker.patch("sys.argv", commands)
         with pytest.raises(SystemExit):
@@ -112,7 +112,7 @@ class TestClass:
         """
         Test enstools-compressor compress
         """
-        import enstools.io
+        import enstools.compression
         input_tempdir = self.input_tempdir
         tempdir_path = input_tempdir.getpath()
         output_tempdir = self.output_tempdir
@@ -130,7 +130,7 @@ class TestClass:
         """
         Test enstools-compressor compress
         """
-        import enstools.io
+        import enstools.compression
         input_tempdir = self.input_tempdir
         tempdir_path = input_tempdir.getpath()
         output_tempdir = self.output_tempdir
@@ -145,13 +145,11 @@ class TestClass:
         enstools.io.cli()
         assert isfile(output_file_path)
 
-
-
     def test_analyze(self, mocker):
         """
         Test enstools-compressor analyze
         """
-        import enstools.io
+        import enstools.compression
         input_tempdir = self.input_tempdir
         tempdir_path = input_tempdir.getpath()
 
@@ -165,7 +163,7 @@ class TestClass:
         """
         Test enstools-compressor analyze in compression ratio mode.
         """
-        import enstools.io
+        import enstools.compression
         input_tempdir = self.input_tempdir
         tempdir_path = input_tempdir.getpath()
 
@@ -173,13 +171,13 @@ class TestClass:
         file_path = join(tempdir_path, file_name)
         commands = ["_", "analyze", file_path, "--compression-ratio", "5"]
         mocker.patch("sys.argv", commands)
-        enstools.io.cli()
+        enstools.compression.cli()
 
     def test_evaluator(self, mocker):
         """
         Test enstools-compressor evaluate
         """
-        import enstools.io
+        import enstools.compression
         input_tempdir = self.input_tempdir
         tempdir_path = input_tempdir.getpath()
 
@@ -187,13 +185,13 @@ class TestClass:
         file_path = join(tempdir_path, file_name)
         commands = ["_", "evaluate", "-r", file_path, "-t", file_path]
         mocker.patch("sys.argv", commands)
-        enstools.io.cli()
+        enstools.compression.cli()
 
     def test_significand(self, mocker):
         """
         Test enstools-compressor significand
         """
-        import enstools.io
+        import enstools.compression
         input_tempdir = self.input_tempdir
         tempdir_path = input_tempdir.getpath()
 
@@ -201,13 +199,13 @@ class TestClass:
         file_path = join(tempdir_path, file_name)
         commands = ["_", "significand", file_path]
         mocker.patch("sys.argv", commands)
-        enstools.io.cli()
+        enstools.compression.cli()
 
     def test_pruner(self, mocker):
         """
         Test enstools-compressor prune
         """
-        import enstools.io
+        import enstools.compression
         input_tempdir = self.input_tempdir
         tempdir_path = input_tempdir.getpath()
 
@@ -218,4 +216,4 @@ class TestClass:
         file_path = join(tempdir_path, file_name)
         commands = ["_", "prune", file_path, "-o", output_path]
         mocker.patch("sys.argv", commands)
-        enstools.io.cli()
+        enstools.compression.cli()

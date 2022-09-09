@@ -48,7 +48,7 @@ def pruner(file_paths, output, significant_bit_info=None, variables_to_keep=None
     Apply bit prunning to a list of files.
 
     """
-    from enstools.io.compression.compressor import destination_path
+    from enstools.compression.compressor import destination_path
     from os.path import isdir
     from os import access, W_OK
 
@@ -87,7 +87,7 @@ def prune_file(file_path, destination, significant_bit_info=None, variables_to_k
         dataset = drop_variables(dataset, variables_to_keep)
 
     if significant_bit_info is None:
-        from enstools.io.compression.significant_bits import analyze_file_significant_bits
+        from enstools.compression.significant_bits import analyze_file_significant_bits
         significant_bits_dictionary = analyze_file_significant_bits(file_path)
     else:
         significant_bits_dictionary = significant_bit_info

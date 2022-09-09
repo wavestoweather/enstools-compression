@@ -262,7 +262,7 @@ def add_subparser_pruner(subparsers):
 
 
 def call_pruner(args):
-    from enstools.io.compression.pruner import pruner
+    from enstools.compression.pruner import pruner
     file_paths = args.files
     output = args.output
 

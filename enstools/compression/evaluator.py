@@ -4,7 +4,7 @@
 #
 
 """
-from enstools.io.compression.metrics import DataArrayMetrics, DatasetMetrics
+from enstools.compression.metrics import DataArrayMetrics, DatasetMetrics
 
 
 class bcolors:
