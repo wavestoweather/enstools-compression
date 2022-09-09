@@ -16,4 +16,9 @@ setup(name="enstools-compression",
           "enstools-encoding @ git+https://gitlab.physik.uni-muenchen.de/w2w/enstools-encoding.git",
           "zfpy",
       ],
+      entry_points={
+          'console_scripts': [
+              'enstools-compression=enstools.compression:cli'
+          ],
+      },
       )
