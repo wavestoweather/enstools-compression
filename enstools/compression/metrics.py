@@ -79,7 +79,6 @@ class DataArrayMetrics:
 
         from os.path import isdir, join
         from os import makedirs
-        # from enstools.io.compression.metric_functions import inter_quartile_range
 
         # Get dimensions  
         shape = self.reference.shape
