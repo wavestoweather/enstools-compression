@@ -13,6 +13,7 @@ setup(name="enstools-compression",
 
       install_requires=[
           "enstools @ git+https://github.com/wavestoweather/enstools.git",
+          "enstools-encoding @ git+https://github.com/wavestoweather/enstools-encoding.git",
           "zfpy",
       ],
       entry_points={
