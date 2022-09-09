@@ -106,7 +106,7 @@ class TestClass:
         commands = ["_", "-h"]
         mocker.patch("sys.argv", commands)
         with pytest.raises(SystemExit):
-            enstools.io.cli()
+            enstools.compression.cli()
 
     def test_compress(self, mocker):
         """
@@ -123,7 +123,7 @@ class TestClass:
         output_file_path = join(output_path, file_name)
         commands = ["_", "compress", file_path, "-o", output_file_path]
         mocker.patch("sys.argv", commands)
-        enstools.io.cli()
+        enstools.compression.cli()
         assert isfile(output_file_path)
 
     def test_compress_with_compression_specification(self, mocker):
@@ -142,7 +142,7 @@ class TestClass:
         compression = "temperature:lossy,zfp,rate,3.2 precipitation:lossy,zfp,rate,1.6 default:lossless"
         commands = ["_", "compress", file_path, "-o", output_file_path, "--compression", compression]
         mocker.patch("sys.argv", commands)
-        enstools.io.cli()
+        enstools.compression.cli()
         assert isfile(output_file_path)
 
     def test_analyze(self, mocker):
@@ -157,7 +157,7 @@ class TestClass:
         file_path = join(tempdir_path, file_name)
         commands = ["_", "analyze", file_path]
         mocker.patch("sys.argv", commands)
-        enstools.io.cli()
+        enstools.compression.cli()
 
     def test_inverse_analyze(self, mocker):
         """
