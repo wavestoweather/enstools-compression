@@ -1,7 +1,7 @@
-# Ensemble Tools - Compression
+# [Ensemble Tools - Compression](https://github.com/wavestoweather/enstools-compression)
 
 This package extends [Ensemble Tools](https://github.com/wavestoweather/enstools)
-with several tools to enable compression for weather data.  
+with several tools to enable compression for weather data. 
 
 
 # Installation using pip
@@ -45,7 +45,7 @@ need to reinstall anything.
 If you have no plans to modify any code, then you can install `enstools-compression`
 without creating a local working-copy before:
 
-    pip install git+https://github.com/wavestoweather/enstools-compression.git
+    pip install enstools-compression
 
 # Acknowledgment and license
 

@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 # Use the Readme file as long description.
 try:
-    with open("Readme.md", "r") as f:
+    with open("README.md", "r") as f:
         long_description = f.read()
 except FileNotFoundError:
     long_description = ""
@@ -20,7 +20,7 @@ def find_enstools_packages():
 
 # perform the actual install operation
 setup(name="enstools-compression",
-      version="0.1.2",
+      version="0.1.3",
       author="Oriol Tintó",
       author_email="oriol.tinto@lmu.de",
       long_description=long_description,
