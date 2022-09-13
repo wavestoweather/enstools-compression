@@ -2,6 +2,7 @@
 Setup file for enstools-compression
 """
 from setuptools import setup, find_packages
+import os.path
 
 # Use the Readme file as long description.
 try:
@@ -15,7 +16,7 @@ def find_enstools_packages():
     Find the packages inside the enstools folder.
     """
 
-    return [f'enstools.{p}' for p in (find_packages('enstools'))]
+    return [f'enstools.{p}' for p in (find_packages(f'{os.path.dirname(__file__)}/enstools'))]
 
 
 # perform the actual install operation
