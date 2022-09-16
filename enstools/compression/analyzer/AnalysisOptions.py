@@ -24,10 +24,15 @@ compression_modes = {
 class AnalysisOptions:
     compressor: Compressors
     mode: CompressionModes
+    constrains: str
     thresholds: dict
 
-    def __init__(self, compressor: Union[str, Compressors, None], mode: Union[str, Compressors, None],
-                 thresholds: Union[None, dict]):
+    def __init__(self,
+                 compressor: Union[str, Compressors, None],
+                 mode: Union[str, Compressors, None],
+                 constrains: Union[None, str] = None,
+                 thresholds: Union[None, dict] = None,
+                 ):
         if compressor is None:
             self.compressor = Compressors.NONE
         elif isinstance(compressor, Compressors):
@@ -42,7 +47,14 @@ class AnalysisOptions:
         else:
             self.mode = CompressionModes[mode.upper()]
 
-        self.thresholds = thresholds
+        if constrains and not thresholds:
+            self.constrains = constrains
+            self.thresholds = from_csv_to_dict(constrains)
+        elif not constrains and thresholds:
+            self.constrains = from_dict_to_csv(thresholds)
+            self.thresholds = thresholds
+        else:
+            raise AssertionError("Only one of the two arguments should be provided.")
 
 
 @dataclass
@@ -87,3 +99,20 @@ class AnalysisParameters:
                 for mode in compression_modes[compressor]:
                     combinations_dictionary[f"{compressor}:{mode}"] = (compressor, mode)
             return combinations_dictionary
+
+
+def from_dict_to_csv(dictionary: dict) -> str:
+    """
+    Convert a dictionary to a csv string.
+    """
+    return ",".join([f"{key}:{value}" for key,value in dictionary.items()])
+
+def from_csv_to_dict(csv: str) -> dict:
+    """
+    Convert a csv string to a dictionary.
+    """
+    to_return = {}
+    for entry in csv.split(","):
+        key, value = entry.split(":")
+        to_return[key] = float(value)
+    return to_return
