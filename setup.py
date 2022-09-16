@@ -21,7 +21,7 @@ def find_enstools_packages():
 
 # perform the actual install operation
 setup(name="enstools-compression",
-      version="0.1.4",
+      version="0.1.5",
       author="Oriol Tintó",
       author_email="oriol.tinto@lmu.de",
       long_description=long_description,
