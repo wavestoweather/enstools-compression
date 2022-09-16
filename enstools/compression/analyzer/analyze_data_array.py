@@ -64,16 +64,16 @@ def analyze_data_array(data_array: xarray.DataArray, options: AnalysisOptions) -
         # Use bisection method to find optimal compression parameter.
         parameter = bisection_method(parameter_range, constrain=constrain, fun=function_to_nullify)
 
-    # Compute metrics
-    # When aiming for a compression ratio some other metrics need to be provided too.
-    if COMPRESSION_RATIO_LABEL not in options.thresholds:
-        metrics = get_metric_from_parameter(parameter)
-    else:
-        new_options = copy.copy(options)
-        for m in ANALYSIS_DIAGNOSTIC_METRICS:
-            new_options.thresholds[m] = 1
-        get_metric_from_parameter, _, _ = define_functions_to_optimize(data_array, new_options)
-        metrics = get_metric_from_parameter(parameter)
+        # Compute metrics
+        # When aiming for a compression ratio some other metrics need to be provided too.
+        if COMPRESSION_RATIO_LABEL not in options.thresholds:
+            metrics = get_metric_from_parameter(parameter)
+        else:
+            new_options = copy.copy(options)
+            for m in ANALYSIS_DIAGNOSTIC_METRICS:
+                new_options.thresholds[m] = 1
+            get_metric_from_parameter, _, _ = define_functions_to_optimize(data_array, new_options)
+            metrics = get_metric_from_parameter(parameter)
 
     # Define compression specification
     separator = COMPRESSION_SPECIFICATION_SEPARATOR
