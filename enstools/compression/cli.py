@@ -142,28 +142,36 @@ def add_subparser_analyzer(subparsers):
 
     subparser = subparsers.add_parser('analyze', help='Analyze help',
                                       formatter_class=argparse.RawDescriptionHelpFormatter)
-    subparser.add_argument("--correlation", dest="correlation", default=5., type=float,
-                           help="Correlation Index threshold. Default=%(default)s")
-    subparser.add_argument("--ssim", dest="ssim", default=3., type=float,
-                           help="SSIM Index threshold. Default=%(default)s")
-    subparser.add_argument("--compression-ratio", dest="compression_ratio", default=None, type=float,
-                           help="SSIM Index threshold. Default=%(default)s")
-
-    subparser.add_argument("--nrsme", dest="nrmse", default=2, type=float,
-                           help="Normalized RMSE index threshold. Default=%(default)s")
+                                      
+    subparser.add_argument("--constrains", dest="constrains",
+                           default="correlation_I:5,ssim_I:2", type=str,
+                           help="Quality constrains that need to be fulfilled.")
+    
     subparser.add_argument("--output", "-o", dest="output", default=None, type=str,
                            help="Path to the file where the configuration will be saved."
-                                "If not provided will be print in the stdout.")
+                                "If not provided will be print in the stdout.",
+                                )
     subparser.add_argument("--compressor", "-c", dest="compressor", default=None, type=str,
-                           help="Which compressor will be used. Options are zfp, sz or all.")
+                           help="Which compressor will be used. Options are zfp, sz or all.",
+                           )
     subparser.add_argument("--mode", "-m", dest="mode", default=None, type=str,
                            help="Which mode will be used. The options depend on the compressor."
                                 "For sz: abs, rel, pw_rel. For zfp: accuracy, rate, precision."
-                                "Also it is possible to use 'all'")
+                                "Also it is possible to use 'all'",
+                                )
     subparser.add_argument("--grid", "-g", dest="grid", default=None, type=str,
-                           help="Path to the file containing grid information.")
+                           help="Path to the file containing grid information.",
+                           )
     subparser.add_argument("files", type=str, nargs="+",
-                           help='List of files to compress. Multiple files and regex patterns are allowed.')
+                           help='List of files to compress. '
+                           'Multiple files and regex patterns are allowed.',
+                           )
+    
+    subparser.add_argument("--plugins", type=str, nargs="*",
+                           help='List of files with custom metric definitions.'
+                           )
+    
+
     subparser.set_defaults(which='analyzer')
 
 
@@ -171,30 +179,29 @@ def call_analyzer(args):
     file_paths = args.files
     grid = args.grid
     # Compression options
-    correlation = args.correlation
-    ssim = args.ssim
-    nrmse = args.nrmse
+    constrains = args.constrains
     compressor = args.compressor
     mode = args.mode
-    compression_ratio = args.compression_ratio
 
-    # Define thresholds:
-    # In case compression ratio is specified:
-    if compression_ratio is not None:
-        thresholds = {
-            "compression_ratio": compression_ratio
-        }
-    else:
-        thresholds = {
-            "correlation_I": correlation,
-            "ssim_I": ssim,
-            "nrmse_I": nrmse,
-            "positivity": 0.5,
-        }
     # Output filename
     output_file = args.output
+
+    # In case a custom plugin is used:
+    plugins = args.plugins
+    if plugins:
+        import enstools.scores
+        for plugin in plugins:
+            enstools.scores.add_score_from_file(plugin)
+    
     from enstools.compression import analyze
-    analyze(file_paths, output_file, thresholds, compressor=compressor, mode=mode, grid=grid)
+    analyze(
+        file_paths=file_paths,
+        output_file=output_file,
+        constrains=constrains,
+        compressor=compressor,
+        mode=mode,
+        grid=grid,
+        )
 
 
 ###############################
