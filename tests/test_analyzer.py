@@ -86,36 +86,35 @@ class TestAnalyzer(TestClass):
                 analyze(file_paths=[input_path], constrains=constrains)
 
     def test_custom_metric(self):
-        import enstools.scores
-        function_file = "/home/o/Oriol.Tinto/enstools-projects/try_things/dummy_function.py"
-        enstools.scores.add_score_from_file(function_file)
+        from enstools.scores import mean_square_error, add_score_from_file
         from enstools.compression import analyze
-        from enstools.compression.metrics import available_metrics
-
-        assert "dummy_function" in available_metrics
-        
-        # Set the dummy metric
-        
         
         input_tempdir = self.input_tempdir
-        # Check that the compression without specifying compression parameters works
-        datasets = ["dataset_%iD.nc" % dimension for dimension in range(1, 4)]
-        constrains = "dummy_function:3"
+        tempdir_path = input_tempdir.getpath()
 
+        # Create a fake plugin copying an existing score 
+        plugin_name = "dummy_metric"
+        plugin_path = f"{tempdir_path}/{plugin_name}.py"
 
-        """
-        def dummy_metric(reference, target):
-            return 4
+        # Copy the function mean_square_error
+        dummy_function = mean_square_error
         
+        # Get the source code
         import inspect
-        lines = inspect.getsource(dummy_metric)
-        ####
-        # Define and write a dummy metric file.
+        lines = inspect.getsource(dummy_function)
+        function_code = "".join(lines).replace(dummy_function.__name__, plugin_name)
+        # Add xarray import to make it complete
+        function_code = f"import xarray\n{function_code}"
+        # Write it to a file
+        with open(plugin_path, "w") as f:
+            f.write(function_code)
 
+        # Add the function inside the file as a new score
+        add_score_from_file(plugin_path)
 
-        with open(f"{extra_metrics}.py", "w") as f:
-            f.write(lines)
-        """
+        # Check that the analysis using a custom metric defined with a plugin works
+        datasets = ["dataset_%iD.nc" % dimension for dimension in range(1, 4)]
+        constrains = f"{plugin_name}:3"
 
         for ds in datasets:
             input_path = join(input_tempdir.getpath(), ds)        
