@@ -53,6 +53,7 @@ def evaluate(reference_path: str, target_path: str, plot: bool = False, create_g
     #   nrmse_I < 2
 
     def checks(metrics: DataArrayMetrics):
+        import warnings as _warnings
         thresholds = {
             "ssim_I": 3,
             "correlation_I": 4,
@@ -61,8 +62,10 @@ def evaluate(reference_path: str, target_path: str, plot: bool = False, create_g
             "ks_I": 2,
         }
         for key, value in thresholds.items():
-            if any(metrics[key] < value):
-                yield f"{bcolors.BOLD}{key}{bcolors.ENDC} index is low: {metrics[key].max().values:.1f}."
+            with _warnings.catch_warnings():
+                _warnings.simplefilter("ignore")
+                if any(metrics[key] < value):
+                    yield f"{bcolors.BOLD}{key}{bcolors.ENDC} index is low: {metrics[key].max().values:.1f}."
 
     warnings = {}
     for variable in variables:

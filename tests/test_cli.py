@@ -3,101 +3,13 @@ Tests for the commandline interface.
 """
 
 from os.path import isfile, join
+from enstools.encoding.compressors.availability_checks import check_sz_availability
 
 import pytest
+from tests.utils import TestClass
 
 
-def create_synthetic_dataset(directory):
-    """
-    Creates three synthetic netcdf datasets (1d,2d,3d) into the provided directory.
-    :param directory:
-    :return: None
-    """
-    import numpy as np
-    import xarray as xr
-    import pandas as pd
-    from scipy.ndimage import gaussian_filter
-    # Create synthetic datasets
-    nx, ny, nz, m, t = 30, 30, 5, 5, 5
-    lon = np.linspace(-180, 180, nx)
-    lat = np.linspace(-90, 90, ny)
-    levels = np.array(range(nz))
-    for dimension in [1, 2, 3, 4]:
-        if dimension == 1:
-            data_size = (t, nx)
-            var_dimensions = ["time", "lon"]
-        elif dimension == 2:
-            data_size = (t, nx, ny)
-            var_dimensions = ["time", "lon", "lat"]
-        elif dimension == 3:
-            data_size = (t, nz, nx, ny)
-            var_dimensions = ["time", "level", "lon", "lat"]
-        elif dimension == 4:
-            data_size = (t, m, nz, nx, ny)
-            var_dimensions = ["time", "ens", "level", "lon", "lat"]
-        else:
-            raise NotImplementedError()
-
-        temp = 15 + 8 * np.random.randn(*data_size)
-        temp = gaussian_filter(temp, sigma=5)
-        precip = 10 * np.random.rand(*data_size)
-        precip = gaussian_filter(precip, sigma=5)
-
-        ds = xr.Dataset(
-            {
-                "temperature": (var_dimensions, temp),
-                "precipitation": (var_dimensions, precip),
-            },
-
-            coords={
-                "lon": lon,
-                "lat": lat,
-                "level": levels,
-                "time": pd.date_range("2014-09-06", periods=t),
-                "reference_time": pd.Timestamp("2014-09-05"),
-            },
-        )
-        ds_name = "dataset_%iD.nc" % dimension
-        ds.to_netcdf(join(directory, ds_name))
-
-
-class TestClass:
-    @classmethod
-    def setup_class(cls):
-        """
-        This code will be executed at the beginning of the tests.
-        We will be launching the
-        :return:
-        """
-        """
-        Creates two temporary directories:
-        - Input directory: Will store the synthetic data created for the test
-        - Output directory: Will store the compressed synthetic data
-        :return: Tempdir, Tempdir
-        """
-        from enstools.core.tempdir import TempDir
-        # Create temporary directory in which we'll put some synthetic datasets
-        cls.input_tempdir = TempDir(check_free_space=False)
-        cls.output_tempdir = TempDir(check_free_space=False)
-        create_synthetic_dataset(cls.input_tempdir.getpath())
-
-    @classmethod
-    def teardown_class(cls):
-        # release resources
-        cls.input_tempdir.cleanup()
-        cls.output_tempdir.cleanup()
-
-    def test_dataset_exists(self):
-        """
-        Check that the data sets used for the test exist
-        """
-        input_tempdir = self.input_tempdir
-        tempdir_path = input_tempdir.getpath()
-
-        datasets = ["dataset_%iD.nc" % dimension for dimension in range(1, 4)]
-        for ds in datasets:
-            assert isfile(join(tempdir_path, ds))
-
+class TestCommandLineInterface(TestClass):
     def test_help(self, mocker):
         """
         Check that the cli prints the help and exists.
@@ -158,6 +70,70 @@ class TestClass:
         commands = ["_", "analyze", file_path]
         mocker.patch("sys.argv", commands)
         enstools.compression.cli()
+    
+    def test_analyze_with_plugin(self, mocker):
+        """
+        Test enstools-compressor analyze using a custom plugin.
+        """
+        import enstools.compression
+        input_tempdir = self.input_tempdir
+        tempdir_path = input_tempdir.getpath()
+
+        file_name = "dataset_%iD.nc" % 3
+        file_path = join(tempdir_path, file_name)
+
+        # Create a fake plugin copying an existing score 
+        plugin_name = "dummy_metric"
+        plugin_path = f"{tempdir_path}/{plugin_name}.py"
+
+        
+        from enstools.scores import mean_square_error
+        dummy_function = mean_square_error
+        
+        import inspect
+        lines = inspect.getsource(dummy_function)
+        function_code = "".join(lines).replace(dummy_function.__name__, plugin_name)
+        # Add xarray import to make it complete
+        function_code = f"import xarray\n{function_code}"
+        with open(plugin_path, "w") as f:
+            f.write(function_code)
+
+        commands = ["_", "analyze", file_path, "--constrains", f"{plugin_name}:4", "--plugins", plugin_path, "-c", "zfp"]
+        mocker.patch("sys.argv", commands)
+        enstools.compression.cli()
+    
+    @pytest.mark.skipif(not check_sz_availability(), reason="Requires SZ")
+    def test_analyze_with_sz_and_plugin(self, mocker):
+        """
+        Test enstools-compressor analyze using a custom plugin.
+        """
+        import enstools.compression
+        input_tempdir = self.input_tempdir
+        tempdir_path = input_tempdir.getpath()
+
+        file_name = "dataset_%iD.nc" % 3
+        file_path = join(tempdir_path, file_name)
+
+        # Create a fake plugin copying an existing score 
+        plugin_name = "dummy_metric"
+        plugin_path = f"{tempdir_path}/{plugin_name}.py"
+
+        
+        from enstools.scores import mean_square_error
+        dummy_function = mean_square_error
+        
+        import inspect
+        lines = inspect.getsource(dummy_function)
+        function_code = "".join(lines).replace(dummy_function.__name__, plugin_name)
+        # Add xarray import to make it complete
+        function_code = f"import xarray\n{function_code}"
+        with open(plugin_path, "w") as f:
+            f.write(function_code)
+
+        commands = ["_", "analyze", file_path, "--constrains", f"{plugin_name}:4", "--plugins", plugin_path, "-c", "sz"]
+        mocker.patch("sys.argv", commands)
+        enstools.compression.cli()
+
 
     def test_inverse_analyze(self, mocker):
         """
@@ -169,7 +145,7 @@ class TestClass:
 
         file_name = "dataset_%iD.nc" % 3
         file_path = join(tempdir_path, file_name)
-        commands = ["_", "analyze", file_path, "--compression-ratio", "5"]
+        commands = ["_", "analyze", file_path, "--constrains", "compression_ratio:5"]
         mocker.patch("sys.argv", commands)
         enstools.compression.cli()
 

@@ -2,7 +2,7 @@ from os.path import isfile, join
 
 import pytest
 
-from enstools.encoding import check_sz_availability, check_libpressio_availability
+from enstools.encoding import check_sz_availability
 
 from utils import file_size, wrapper, TestClass
 
@@ -18,57 +18,6 @@ class TestCompressor(TestClass):
         datasets = ["dataset_%iD.nc" % dimension for dimension in range(1, 4)]
         for ds in datasets:
             assert isfile(join(tempdir_path, ds))
-
-    def test_analyzer(self):
-        from enstools.compression import analyze
-        input_tempdir = self.input_tempdir
-        # Check that the compression without specifying compression parameters works
-        datasets = ["dataset_%iD.nc" % dimension for dimension in range(1, 4)]
-        for ds in datasets:
-            input_path = join(input_tempdir.getpath(), ds)
-            analyze(file_paths=[input_path])
-
-    def test_zfp_analyzer(self):
-        from enstools.compression import analyze
-        input_tempdir = self.input_tempdir
-        # Check that the compression without specifying compression parameters works
-        datasets = ["dataset_%iD.nc" % dimension for dimension in range(1, 4)]
-        for ds in datasets:
-            input_path = join(input_tempdir.getpath(), ds)
-            analyze(file_paths=[input_path], compressor="zfp")
-
-    def test_inverse_analyzer(self):
-        """
-        This tests checks that we can find compression parameters to fulfill a certain compression ratio.
-        """
-        from enstools.compression import analyze
-        # The resulting compression ratio should be within this tolerance.
-        TOLERANCE = 1
-        cr_label = "compression_ratio"
-        input_tempdir = self.input_tempdir
-        thresholds = {cr_label: 5}
-        # Check that the compression without specifying compression parameters works
-        datasets = ["dataset_%iD.nc" % dimension for dimension in range(2, 4)]
-        for ds in datasets:
-            input_path = join(input_tempdir.getpath(), ds)
-            encodings, metrics = analyze(file_paths=[input_path], thresholds=thresholds)
-            if not metrics:
-                raise AssertionError("Metrics shouldn't be empty")
-
-            for var in metrics:
-                if abs(metrics[var][cr_label] - thresholds[cr_label]) > TOLERANCE:
-                    raise AssertionError(f"The resulting compression ratio of {metrics[var][cr_label]:.2f}"
-                                         f"x is not close enough to the target of {thresholds[cr_label]:.2f}")
-
-    @pytest.mark.skipif(not check_libpressio_availability(), reason="Requires libpressio")
-    def test_sz_analyzer(self):
-        from enstools.compression import analyze
-        input_tempdir = self.input_tempdir
-        # Check that the compression without specifying compression parameters works
-        datasets = ["dataset_%iD.nc" % dimension for dimension in range(1, 4)]
-        for ds in datasets:
-            input_path = join(input_tempdir.getpath(), ds)
-            analyze(file_paths=[input_path], compressor="sz")
 
     def test_compress_vanilla(self):
         wrapper(self)

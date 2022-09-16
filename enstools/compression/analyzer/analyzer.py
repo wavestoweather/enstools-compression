@@ -176,16 +176,21 @@ def find_encodings_for_all_combinations(dataset: xarray.Dataset, options: Analys
     return encodings, metrics
 
 
-def analyze(file_paths: Union[List[str], str], output_file: str = None, thresholds: dict = None,
+def analyze(file_paths: Union[List[str], str],
+            output_file: str = None,
+            constrains: str = "correlation_I:5,ssim_I:2",
             file_format: str = "yaml",
-            compressor: str = None, mode: str = None, grid: str = None):
+            compressor: str = None,
+            mode: str = None,
+            grid: str = None,
+            ):
     """
     Finds optimal compression parameters for a list of files to fulfill certain thresholds.
     If an output_file argument is provided it will output the dictionary in there (yaml or json allowed).
 
     :param file_paths:
     :param output_file:
-    :param thresholds:
+    :param constrains:
     :param file_format:
     :param compressor:
     :param mode:
@@ -193,19 +198,13 @@ def analyze(file_paths: Union[List[str], str], output_file: str = None, threshol
     :return:
     """
 
-    if thresholds is None:
-        thresholds = {
-            "correlation_I": 5,
-            "ssim_I": 3,
-            "positivity": 0.5,
-        }
-
     print(
-        f"\nAnalyzing files to determine optimal compression options for compressor {compressor} "
-        f"with mode {mode} to fulfill the following thresholds:")
-    pprint(thresholds)
+        f"\nAnalyzing files to determine optimal compression options for compressor {compressor!r} "
+        f"with mode {mode!r} to fulfill the following constrains:\n"
+        f"{constrains}\n"
+    )
     print()
-    options = AnalysisOptions(compressor=compressor, mode=mode, thresholds=thresholds)
+    options = AnalysisOptions(compressor=compressor, mode=mode, constrains=constrains)
     encoding, metrics = analyze_files(file_paths, options, grid=grid)
 
     save_encoding(encoding, output_file, file_format)
