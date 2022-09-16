@@ -183,7 +183,7 @@ def compress(file_paths: Union[List[str], str], output: str, compression: Union[
         import os
         compression_parameters_path = os.path.join(output, "compression_parameters.yaml")
         # By using thresholds = None we will be using the default values.
-        analyze(file_paths, thresholds=None, output_file=compression_parameters_path)
+        analyze(file_paths, output_file=compression_parameters_path)
         # Now lets continue setting compression = compression_parameters_path
         compression = compression_parameters_path
 
