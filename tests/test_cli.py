@@ -158,6 +158,38 @@ class TestClass:
         commands = ["_", "analyze", file_path]
         mocker.patch("sys.argv", commands)
         enstools.compression.cli()
+    
+    def test_analyze_with_plugin(self, mocker):
+        """
+        Test enstools-compressor analyze using a custom plugin.
+        """
+        import enstools.compression
+        input_tempdir = self.input_tempdir
+        tempdir_path = input_tempdir.getpath()
+
+        file_name = "dataset_%iD.nc" % 3
+        file_path = join(tempdir_path, file_name)
+
+        # Create a fake plugin copying an existing score 
+        plugin_name = "dummy_metric"
+        plugin_path = f"{tempdir_path}/{plugin_name}.py"
+
+        
+        from enstools.scores import mean_square_error
+        dummy_function = mean_square_error
+        
+        import inspect
+        lines = inspect.getsource(dummy_function)
+        function_code = "".join(lines).replace(dummy_function.__name__, plugin_name)
+        # Add xarray import to make it complete
+        function_code = f"import xarray\n{function_code}"
+        with open(plugin_path, "w") as f:
+            f.write(function_code)
+
+        commands = ["_", "analyze", file_path, "--constrains", f"{plugin_name}:4", "--plugins", plugin_path]
+        mocker.patch("sys.argv", commands)
+        enstools.compression.cli()
+
 
     def test_inverse_analyze(self, mocker):
         """
@@ -169,7 +201,7 @@ class TestClass:
 
         file_name = "dataset_%iD.nc" % 3
         file_path = join(tempdir_path, file_name)
-        commands = ["_", "analyze", file_path, "--compression-ratio", "5"]
+        commands = ["_", "analyze", file_path, "--constrains", "compression_ratio:5"]
         mocker.patch("sys.argv", commands)
         enstools.compression.cli()
 
