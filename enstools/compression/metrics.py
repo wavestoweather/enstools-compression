@@ -1,5 +1,6 @@
 from os.path import isfile
 from typing import Union
+from enstools.core.errors import EnstoolsError
 
 import numpy as np
 import xarray
@@ -7,7 +8,10 @@ import xarray
 from enstools.io import read
 
 
-def get_matching_scores(arguments: list):
+def get_matching_scores(arguments: list) -> dict:
+    """
+    Returns a dictionary of functions that match with the provided arguments.
+    """
     import enstools.scores
     from inspect import getmembers, isfunction, signature
     functions_list = getmembers(enstools.scores, isfunction)
@@ -20,7 +24,14 @@ def get_matching_scores(arguments: list):
     return {name: fun for name, fun in functions_list if check_signature(fun)}
 
 
-available_metrics = get_matching_scores(arguments=["reference", "target"])
+# Workaround to update the list of available metrics when the metrics are used,
+# not only when the module is imported.
+class AvailableMetrics:
+    @property
+    def get(self):
+        return get_matching_scores(arguments=["reference", "target"])
+
+available_metrics = AvailableMetrics()
 
 
 class DataArrayMetrics:
@@ -52,7 +63,7 @@ class DataArrayMetrics:
         self.metric_values = {}
 
         # Add the list of available metrics from metric_definitions
-        self.available_metrics = list(available_metrics.keys())
+        self.available_metrics = list(available_metrics.get.keys())
 
     def __getitem__(self, name: str) -> xarray.DataArray:
         # Look if the metric has already been computed.
@@ -70,7 +81,9 @@ class DataArrayMetrics:
             self.target.values[np.isnan(self.target.values)] = fill_value
 
     def compute_metric(self, method: str) -> xarray.DataArray:
-        return available_metrics[method](self.reference, self.target)
+        if method not in self.available_metrics:
+            raise EnstoolsError(f"Metric {method!r} not available.")
+        return available_metrics.get[method](self.reference, self.target)
 
     def plot_summary(self, output_folder: str = "report"):
         # TODO: This is not the proper place to put this code. Move it somewhere else.
