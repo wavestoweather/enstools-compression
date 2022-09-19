@@ -5,7 +5,7 @@ in analyze_data_array in case libpressio is available.
 
 import numpy as np
 
-from enstools.encoding import Compressors, CompressionModes, compression_mode_aliases
+from enstools.encoding.api import Compressors, CompressionModes, compression_mode_aliases
 from .AnalysisCompressor import AnalysisCompressor
 
 

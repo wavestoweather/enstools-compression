@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import numpy as np
 
-from enstools.encoding import Compressors, CompressionModes
+from enstools.encoding.api import Compressors, CompressionModes
 
 
 class AnalysisCompressor(ABC):

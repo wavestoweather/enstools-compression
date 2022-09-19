@@ -5,7 +5,7 @@ import xarray
 
 from enstools.core.errors import EnstoolsError
 from enstools.compression.analyzer.AnalysisOptions import AnalysisOptions
-from enstools.encoding import Compressors, CompressionModes
+from enstools.encoding.api import Compressors, CompressionModes
 from enstools.compression.metrics import DataArrayMetrics
 
 

@@ -8,7 +8,7 @@ import numpy as np
 import xarray
 
 from enstools.core.errors import EnstoolsError
-from enstools.encoding import compression_mode_aliases, compressor_aliases, Compressors, check_libpressio_availability
+from enstools.encoding.api import compression_mode_aliases, compressor_aliases, Compressors, check_libpressio_availability
 from enstools.encoding.rules import COMPRESSION_SPECIFICATION_SEPARATOR
 from .AnalysisCompressor import AnalysisCompressor
 from .AnalysisOptions import AnalysisOptions

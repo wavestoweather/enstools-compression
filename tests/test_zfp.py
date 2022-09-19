@@ -5,7 +5,7 @@ folders = None
 
 class TestZFP(TestClass):
     def test_zfp_filter_availability(self):
-        from enstools.encoding import check_zfp_availability
+        from enstools.encoding.api import check_zfp_availability
         assert check_zfp_availability
 
     def test_compress_zfp_rate(self):

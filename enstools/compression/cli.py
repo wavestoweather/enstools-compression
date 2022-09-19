@@ -130,7 +130,7 @@ def call_compressor(args):
         variables = variables.split(",")
     emulate = args.emulate
     # Import and launch compress function
-    from enstools.compression import compress
+    from enstools.compression.api import compress
     compress(file_paths, output, compression, nodes, variables_to_keep=variables, emulate=emulate)
 
 
@@ -193,7 +193,7 @@ def call_analyzer(args):
         for plugin in plugins:
             enstools.scores.add_score_from_file(plugin)
     
-    from enstools.compression import analyze
+    from enstools.compression.api import analyze
     analyze(
         file_paths=file_paths,
         output_file=output_file,
@@ -223,7 +223,7 @@ def add_subparser_significand(subparsers):
 
 
 def call_significand(args):
-    from enstools.compression import analyze_file_significant_bits
+    from enstools.compression.api import analyze_file_significant_bits
     file_paths = args.files
 
     for file_path in file_paths:
@@ -251,7 +251,7 @@ def call_evaluator(args):
     target_file_path = args.target_file
     plot = args.plot
 
-    from enstools.compression import evaluate
+    from enstools.compression.api import evaluate
     evaluate(reference_file_path, target_file_path, plot=plot)
 
 

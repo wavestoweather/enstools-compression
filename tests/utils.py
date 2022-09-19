@@ -56,7 +56,7 @@ def file_size(file_path) -> int:
 
 
 def wrapper(cls, compression=None):
-    import enstools.compression
+    import enstools.compression.api
     import enstools.io
     from os.path import join
     input_tempdir = cls.input_tempdir
@@ -67,7 +67,7 @@ def wrapper(cls, compression=None):
         input_path = join(input_tempdir.getpath(), ds)
         output_path = output_tempdir.getpath()
         # Import and launch compress function
-        enstools.compression.compress([input_path], output_path, compression=compression, nodes=0)
+        enstools.compression.api.compress([input_path], output_path, compression=compression, nodes=0)
 
         # Check that the output file can be loaded
         with enstools.io.read(join(output_path, ds)) as ds_out:

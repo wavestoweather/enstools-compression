@@ -1,7 +1,7 @@
 import numpy as np
 from sys import getsizeof
 from .AnalysisCompressor import AnalysisCompressor
-from enstools.encoding import compression_mode_aliases, Compressors
+from enstools.encoding.api import compression_mode_aliases, Compressors
 from enstools.core.errors import EnstoolsError
 import zfpy
 

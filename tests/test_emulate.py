@@ -2,7 +2,7 @@ from os.path import join
 
 import pytest
 
-from enstools.encoding import check_libpressio_availability
+from enstools.encoding.api import check_libpressio_availability
 
 from utils import TestClass
 

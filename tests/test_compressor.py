@@ -2,7 +2,7 @@ from os.path import isfile, join
 
 import pytest
 
-from enstools.encoding import check_sz_availability
+from enstools.encoding.api import check_sz_availability
 
 from utils import file_size, wrapper, TestClass
 
@@ -55,7 +55,7 @@ class TestCompressor(TestClass):
         wrapper(self, compression=compression)
 
     def test_compress_ratios_lossy(self):
-        from enstools.compression import compress
+        from enstools.compression.api import compress
         input_tempdir = self.input_tempdir
         output_tempdir = self.output_tempdir
         # Check that compression works when specifying compression = lossy:sz
@@ -71,7 +71,7 @@ class TestCompressor(TestClass):
             assert initial_size > final_size
 
     def test_compress_ratios_lossless(self):
-        from enstools.compression import compress
+        from enstools.compression.api import compress
         # Check that compression works when specifying compression = lossy:sz
         input_tempdir = self.input_tempdir
         output_tempdir = self.output_tempdir
@@ -89,15 +89,15 @@ class TestCompressor(TestClass):
 
     @pytest.mark.skipif(not check_sz_availability(), reason="Requires SZ")
     def test_filters_availability(self):
-        from enstools.encoding import check_filters_availability
+        from enstools.encoding.api import check_filters_availability
         assert check_filters_availability()
 
     def test_blosc_filter_availability(self):
-        from enstools.encoding import check_blosc_availability
+        from enstools.encoding.api import check_blosc_availability
         assert check_blosc_availability
 
     def test_specify_single_file_output_name(self):
-        from enstools.compression import compress
+        from enstools.compression.api import compress
         input_tempdir = self.input_tempdir
         output_tempdir = self.output_tempdir
         # Check that the compression without specifying compression parameters works
@@ -109,7 +109,7 @@ class TestCompressor(TestClass):
             compress([input_path], output_filename, compression="lossless", nodes=0)
 
     def test_compress_single_file(self):
-        from enstools.compression import compress
+        from enstools.compression.api import compress
         input_tempdir = self.input_tempdir
         output_tempdir = self.output_tempdir
         # Check that the compression without specifying compression parameters works

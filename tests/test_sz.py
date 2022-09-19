@@ -2,7 +2,7 @@ from os.path import join
 
 import pytest
 
-from enstools.encoding import check_sz_availability, check_libpressio_availability
+from enstools.encoding.api import check_sz_availability, check_libpressio_availability
 
 from utils import wrapper, TestClass
 
@@ -19,7 +19,7 @@ class TestSZ(TestClass):
 
     @pytest.mark.skipif(not check_libpressio_availability(), reason="Requires libpressio")
     def test_sz_analyzer(self):
-        from enstools.compression import analyze
+        from enstools.compression.api import analyze
         input_tempdir = self.input_tempdir
         # Check that the compression without specifying compression parameters works
         datasets = ["dataset_%iD.nc" % dimension for dimension in range(1, 4)]

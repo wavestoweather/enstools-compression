@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Union
 
 from enstools.core.errors import EnstoolsError
-from enstools.encoding import Compressors, CompressionModes, check_libpressio_availability
+from enstools.encoding.api import Compressors, CompressionModes, check_libpressio_availability
 
 compression_modes = {
     Compressors.ZFP: [

@@ -2,7 +2,7 @@ from os.path import isfile, join
 
 import pytest
 
-from enstools.encoding import check_sz_availability, check_libpressio_availability
+from enstools.encoding.api import check_sz_availability, check_libpressio_availability
 
 from utils import file_size, wrapper, TestClass
 
@@ -11,7 +11,7 @@ folders = None
 
 class TestAnalyzer(TestClass):
     def test_analyzer(self):
-        from enstools.compression import analyze
+        from enstools.compression.api import analyze
         input_tempdir = self.input_tempdir
         # Check that the compression without specifying compression parameters works
         datasets = ["dataset_%iD.nc" % dimension for dimension in range(1, 4)]
@@ -20,7 +20,7 @@ class TestAnalyzer(TestClass):
             analyze(file_paths=[input_path])
 
     def test_zfp_analyzer(self):
-        from enstools.compression import analyze
+        from enstools.compression.api import analyze
         input_tempdir = self.input_tempdir
         # Check that the compression without specifying compression parameters works
         datasets = ["dataset_%iD.nc" % dimension for dimension in range(1, 4)]
@@ -32,7 +32,7 @@ class TestAnalyzer(TestClass):
         """
         This tests checks that we can find compression parameters to fulfill a certain compression ratio.
         """
-        from enstools.compression import analyze
+        from enstools.compression.api import analyze
         from enstools.compression.analyzer.AnalysisOptions import from_csv_to_dict
         # The resulting compression ratio should be within this tolerance.
         TOLERANCE = 1
@@ -55,7 +55,7 @@ class TestAnalyzer(TestClass):
 
     @pytest.mark.skipif(not check_libpressio_availability(), reason="Requires libpressio")
     def test_sz_analyzer(self):
-        from enstools.compression import analyze
+        from enstools.compression.api import analyze
         input_tempdir = self.input_tempdir
         # Check that the compression without specifying compression parameters works
         datasets = ["dataset_%iD.nc" % dimension for dimension in range(1, 4)]
@@ -64,7 +64,7 @@ class TestAnalyzer(TestClass):
             analyze(file_paths=[input_path], compressor="sz")
 
     def test_constrains(self):
-        from enstools.compression import analyze
+        from enstools.compression.api import analyze
         input_tempdir = self.input_tempdir
         # Check that the compression without specifying compression parameters works
         datasets = ["dataset_%iD.nc" % dimension for dimension in range(1, 4)]
@@ -74,7 +74,7 @@ class TestAnalyzer(TestClass):
             analyze(file_paths=[input_path], constrains=constrains)
 
     def test_wrong_constrain(self):
-        from enstools.compression import analyze
+        from enstools.compression.api import analyze
         from enstools.core.errors import EnstoolsError
         input_tempdir = self.input_tempdir
         # Check that the compression without specifying compression parameters works
@@ -87,7 +87,7 @@ class TestAnalyzer(TestClass):
 
     def test_custom_metric(self):
         from enstools.scores import mean_square_error, add_score_from_file
-        from enstools.compression import analyze
+        from enstools.compression.api import analyze
         
         input_tempdir = self.input_tempdir
         tempdir_path = input_tempdir.getpath()
