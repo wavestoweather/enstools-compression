@@ -4,7 +4,9 @@
 #
 
 """
+import logging
 import time
+from functools import partial
 from os import rename, access, W_OK
 from os.path import isfile, isdir
 from typing import Union, List
@@ -31,8 +33,13 @@ def fix_filename(file_name):
     return file_name
 
 
-def transfer(file_paths: Union[List[str], str], output: str, compression: str = "lossless",
-             variables_to_keep: List[str] = None, emulate=False) -> None:
+def transfer(file_paths: Union[List[str], str],
+             output: str,
+             compression: str = "lossless",
+             variables_to_keep: List[str] = None,
+             emulate=False,
+             fill_na: Union[float, bool] = False,
+             ) -> None:
     """
     This function loops through a list of files creating delayed dask tasks to copy each one of the files while
     optionally using compression.
