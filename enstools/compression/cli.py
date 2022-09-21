@@ -100,6 +100,8 @@ def add_subparser_compressor(subparsers):
     subparser.add_argument("--emulate", dest="emulate", default=False, action='store_true',
                            help="Instead of saving compressed files, it compresses and decompresses the data to see"
                                 "compression effects without requiring the plugins to open the files.")
+    subparser.add_argument("--fill-na", dest="fill_na", default=False,
+                           help="Fill the missing values with a float.")
 
     subparser.set_defaults(which='compressor')
 
@@ -115,6 +117,10 @@ def call_compressor(args):
     # Compression options
     compression = args.compression
 
+    # Get parameter for fill_na
+    fill_na = args.fill_na
+    if fill_na is not False:
+        fill_na = float(fill_na)
     if isinstance(compression, list):
         compression = " ".join(compression)
 
@@ -131,7 +137,7 @@ def call_compressor(args):
     emulate = args.emulate
     # Import and launch compress function
     from enstools.compression.api import compress
-    compress(file_paths, output, compression, nodes, variables_to_keep=variables, emulate=emulate)
+    compress(file_paths, output, compression, nodes, variables_to_keep=variables, emulate=emulate, fill_na=fill_na)
 
 
 ###############################
