@@ -54,30 +54,39 @@ def transfer(file_paths: Union[List[str], str], output: str, compression: str = 
     if isinstance(file_paths, str):
         file_paths = [file_paths]
 
-    # If we have a single file, we might accept a output filename instead of an output folder.
-    # Some assertions first to prevent wrong usage.
-    if len(file_paths) == 0:
-        raise AssertionError("file_paths can't be an empty list")
-    elif len(file_paths) == 1:
-        file_path = file_paths[0]
-        new_file_path = destination_path(file_path, output) if isdir(output) else output
-        transfer_file(file_path, new_file_path, compression, variables_to_keep, emulate=emulate)
-    elif len(file_paths) > 1:
-        # In case of having more than one file, check that output corresponds to a directory
-        assert isdir(output), "For multiple files, the output parameter should be a directory"
-        assert access(output, W_OK), "The output folder provided does not have write permissions"
+    from dask.diagnostics import ProgressBar
+    with ProgressBar():
+        # If we have a single file, we might accept a output filename instead of an output folder.
+        # Some assertions first to prevent wrong usage.
+        if len(file_paths) == 0:
+            raise AssertionError("file_paths can't be an empty list")
+        elif len(file_paths) == 1:
+            file_path = file_paths[0]
+            new_file_path = destination_path(file_path, output) if isdir(output) else output
+            transfer_file(file_path, new_file_path, compression, variables_to_keep, emulate=emulate, fill_na=fill_na)
+        elif len(file_paths) > 1:
+            # In case of having more than one file, check that output corresponds to a directory
+            assert isdir(output), "For multiple files, the output parameter should be a directory"
+            assert access(output, W_OK), "The output folder provided does not have write permissions"
 
-        transfer_multiple_files(
-            file_paths=file_paths,
-            output=output,
-            compression=compression,
-            variables_to_keep=variables_to_keep,
-            emulate=emulate,
-        )
+            transfer_multiple_files(
+                file_paths=file_paths,
+                output=output,
+                compression=compression,
+                variables_to_keep=variables_to_keep,
+                emulate=emulate,
+                fill_na=fill_na,
+            )
 
 
-def transfer_multiple_files(file_paths: Union[List[str], str], output: str, compression: str = "lossless",
-                            variables_to_keep: List[str] = None, emulate: bool = False):
+def transfer_multiple_files(
+        file_paths: Union[List[str], str],
+        output: str,
+        compression: str = "lossless",
+        variables_to_keep: List[str] = None,
+        emulate: bool = False,
+        fill_na: Union[float, bool] = False
+):
     from dask import compute
     # Create and fill the list of tasks
     tasks = []
@@ -100,7 +109,9 @@ def transfer_multiple_files(file_paths: Union[List[str], str], output: str, comp
                              compression,
                              variables_to_keep,
                              compute=False,
-                             emulate=emulate)
+                             emulate=emulate,
+                             fill_na=fill_na,
+                             )
         # Add task to the list
         tasks.append(task)
 
@@ -113,7 +124,7 @@ def transfer_multiple_files(file_paths: Union[List[str], str], output: str, comp
 
 
 def transfer_file(origin: str, destination: str, compression: str, variables_to_keep: List[str] = None,
-                  compute: bool = True, emulate=False):
+                  compute: bool = True, emulate=False, fill_na: Union[float, bool] = False):
     """
     This function will copy a dataset while optionally applying compression.
 
@@ -133,6 +144,14 @@ def transfer_file(origin: str, destination: str, compression: str, variables_to_
     if variables_to_keep is not None:
         dataset = drop_variables(dataset, variables_to_keep)
 
+    # If we don't chunk the dataset before writing, it might try to operate with the full array leading to
+    # memory issues
+    chunks = {k: v if k != "time" else 1 for k, v in dataset.chunksizes.items()}
+    dataset = dataset.chunk(chunks)
+
+    if fill_na is not False:
+        dataset = dataset.fillna(fill_na)
+        logging.info(f"Filling missing values with {fill_na!r}")
     # In case we are using emulate, we compress and decompress the dataset using LibPressio and output
     # the file without compression only to measure the impact compression would have.
     if emulate:
@@ -171,8 +190,14 @@ def destination_path(origin_path: str, destination_folder: str):
     return destination
 
 
-def compress(file_paths: Union[List[str], str], output: str, compression: Union[str, dict, None], nodes: int = 0,
-             variables_to_keep: List[str] = None, show_compression_ratios=False, emulate=False) -> None:
+def compress(
+        file_paths: Union[List[str], str],
+        output: str,
+        compression: Union[str, dict, None],
+        nodes: int = 0,
+        variables_to_keep: List[str] = None, show_compression_ratios=False, emulate=False,
+        fill_na: Union[float, bool] = False,
+) -> None:
     """
     Copies a list of files to a destination folder, optionally applying compression.
     """
@@ -197,12 +222,18 @@ def compress(file_paths: Union[List[str], str], output: str, compression: Union[
             with performance_report(filename="dask-report.html"):
                 # Transfer will copy the files from its origin path to the output folder,
                 # using read and write functions from enstools
-                transfer(file_paths, output, compression, variables_to_keep=variables_to_keep, emulate=emulate)
+                transfer(file_paths,
+                         output,
+                         compression,
+                         variables_to_keep=variables_to_keep,
+                         emulate=emulate,
+                         fill_na=fill_na,
+                         )
 
     else:
         # Transfer will copy the files from its origin path to the output folder,
         # using read and write functions from enstools
-        transfer(file_paths, output, compression, variables_to_keep=variables_to_keep, emulate=emulate)
+        transfer(file_paths, output, compression, variables_to_keep=variables_to_keep, emulate=emulate, fill_na=fill_na)
 
     if show_compression_ratios:
         check_compression_ratios(file_paths, output)
