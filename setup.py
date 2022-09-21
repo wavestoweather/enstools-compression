@@ -37,7 +37,7 @@ setup(name="enstools-compression",
       ],
       entry_points={
           'console_scripts': [
-              'enstools-compression=enstools.compression:cli'
+              'enstools-compression=enstools.compression.cli:main'
           ],
       },
       )
