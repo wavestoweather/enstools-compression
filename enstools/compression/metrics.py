@@ -73,6 +73,7 @@ class DataArrayMetrics:
         return self.metric_values[name]
 
     def fix_nan(self):
+        # FIXME: That looks a bit dangerous.
         # Replace NaNs with a fill value.
         fill_value = -10000.
         if np.isnan(self.reference.values).any():
