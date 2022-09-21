@@ -6,7 +6,6 @@
 
 """
 import logging
-from pprint import pprint
 from typing import Union, List, Tuple, Dict
 
 import numpy as np
@@ -14,15 +13,24 @@ import xarray
 
 from .AnalysisOptions import AnalysisOptions, AnalysisParameters
 from .analyze_data_array import analyze_data_array, ANALYSIS_DIAGNOSTIC_METRICS, COMPRESSION_RATIO_LABEL
+from enstools.compression.compressor import drop_variables
 
 
-def analyze_files(file_paths: List[str], options: AnalysisOptions, grid: str = None):
+def analyze_files(
+        file_paths: List[str],
+        options: AnalysisOptions,
+        grid: str = None,
+        fill_na: Union[float, bool] = False,
+        variables: List = None,
+):
     """
     Load the dataset and go variable by variable determining the optimal compression parameters
 
     :param file_paths:
     :param options:
     :param grid:
+    :param fill_na: If provided, the missing values will be replaced with this value.
+    :param variables:
     :return:
     """
     from enstools.io import read
@@ -31,7 +39,13 @@ def analyze_files(file_paths: List[str], options: AnalysisOptions, grid: str = N
     if grid:
         dataset = read(file_paths, constant=grid)
     else:
-        dataset = read(file_paths, constant=grid)
+        dataset = read(file_paths)
+
+    if variables is not None:
+        dataset = drop_variables(dataset, variables)
+
+    if fill_na is not False:
+        dataset = dataset.fillna(fill_na)
 
     return find_optimal_encoding(dataset, options)
 
@@ -183,6 +197,8 @@ def analyze(file_paths: Union[List[str], str],
             compressor: str = None,
             mode: str = None,
             grid: str = None,
+            fill_na: Union[float, bool] = False,
+            variables: List = None,
             ):
     """
     Finds optimal compression parameters for a list of files to fulfill certain thresholds.
@@ -195,6 +211,8 @@ def analyze(file_paths: Union[List[str], str],
     :param compressor:
     :param mode:
     :param grid:
+    :param fill_na:
+    :param variables:
     :return:
     """
 
@@ -205,7 +223,7 @@ def analyze(file_paths: Union[List[str], str],
     )
     print()
     options = AnalysisOptions(compressor=compressor, mode=mode, constrains=constrains)
-    encoding, metrics = analyze_files(file_paths, options, grid=grid)
+    encoding, metrics = analyze_files(file_paths, options, grid=grid, fill_na=fill_na, variables=variables)
 
     save_encoding(encoding, output_file, file_format)
 

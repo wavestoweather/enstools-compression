@@ -148,11 +148,11 @@ def add_subparser_analyzer(subparsers):
 
     subparser = subparsers.add_parser('analyze', help='Analyze help',
                                       formatter_class=argparse.RawDescriptionHelpFormatter)
-                                      
+
     subparser.add_argument("--constrains", dest="constrains",
                            default="correlation_I:5,ssim_I:2", type=str,
                            help="Quality constrains that need to be fulfilled.")
-    
+
     subparser.add_argument("--output", "-o", dest="output", default=None, type=str,
                            help="Path to the file where the configuration will be saved."
                                 "If not provided will be print in the stdout.",
@@ -172,11 +172,19 @@ def add_subparser_analyzer(subparsers):
                            help='List of files to compress. '
                            'Multiple files and regex patterns are allowed.',
                            )
-    
+
     subparser.add_argument("--plugins", type=str, nargs="*",
                            help='List of files with custom metric definitions.'
                            )
-    
+
+    subparser.add_argument("--fill-na", dest="fill_na", default=False,
+                           help="Fill the missing values with a float.")
+    subparser.add_argument("--variables", dest="variables", default=None, type=str,
+                           help="List of variables to analyze."
+                                "Must be a list of comma separated values: i.e. vor,temp,qv"
+                                "Default=None")
+
+
 
     subparser.set_defaults(which='analyzer')
 
@@ -192,13 +200,21 @@ def call_analyzer(args):
     # Output filename
     output_file = args.output
 
+    # Get parameter for
+    fill_na = float(args.fill_na) if args.fill_na is not False else False
+
+    # List of variables
+    variables = args.variables
+    if variables is not None:
+        variables = variables.split(",")
+
     # In case a custom plugin is used:
     plugins = args.plugins
     if plugins:
         import enstools.scores
         for plugin in plugins:
             enstools.scores.add_score_from_file(plugin)
-    
+
     from enstools.compression.api import analyze
     analyze(
         file_paths=file_paths,
@@ -207,6 +223,8 @@ def call_analyzer(args):
         compressor=compressor,
         mode=mode,
         grid=grid,
+        fill_na=fill_na,
+        variables=variables,
         )
 
 
