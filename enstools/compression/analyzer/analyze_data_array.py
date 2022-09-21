@@ -45,6 +45,8 @@ def analyze_data_array(data_array: xarray.DataArray, options: AnalysisOptions) -
     # Check if the array contains any nan
     contains_nan = np.isnan(data_array.values).any()
     if contains_nan:
+        logging.warning(f"The variable {data_array.name!r} contains NaN. Falling to 'lossless'.\n"
+                        "It is possible to prevent that replacing the NaN values using the parameter --fill-na")
         return "lossless", {**{COMPRESSION_RATIO_LABEL: 1.0}, **{met: 0. for met in ANALYSIS_DIAGNOSTIC_METRICS}}
 
     # Define the functions that will be used to find optimal parameters
