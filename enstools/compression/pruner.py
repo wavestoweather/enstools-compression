@@ -5,9 +5,12 @@ import xarray
 from .compressor import drop_variables
 from .significant_bits import get_uint_type_by_bit_length, single_bit_mask, apply_mask, \
     mask_generator
+from enstools.io.paths import clean_paths
+from typing import Union, List
+from pathlib import Path
 
 
-def prune_numpy_array(array: np.array, significant_bits=0, round_to_nearest=True):
+def prune_numpy_array(array: np.ndarray, significant_bits=0, round_to_nearest=True):
     """
     Create and apply a mask with number of ones given by the input variable significant_bits.
 
@@ -43,7 +46,11 @@ def prune_numpy_array(array: np.array, significant_bits=0, round_to_nearest=True
     return pruned
 
 
-def pruner(file_paths, output, significant_bit_info=None, variables_to_keep=None):
+def pruner(file_paths: Union[Path, List[Path], str, List[str]],
+           output: Union[str, Path],
+           significant_bit_info=None,
+           variables_to_keep=None,
+           ):
     """
     Apply bit prunning to a list of files.
 
@@ -52,9 +59,8 @@ def pruner(file_paths, output, significant_bit_info=None, variables_to_keep=None
     from os.path import isdir
     from os import access, W_OK
 
-    # If its a single file, just create a list with it.
-    if isinstance(file_paths, str):
-        file_paths = [file_paths]
+    file_paths = clean_paths(file_paths)
+    output = Path(output).resolve()
 
     # If we have a single file, we might accept a output filename instead of an output folder.
     # Some assertions first to prevent wrong usage.
@@ -62,7 +68,7 @@ def pruner(file_paths, output, significant_bit_info=None, variables_to_keep=None
         raise AssertionError("file_paths can't be an empty list")
     elif len(file_paths) == 1:
         file_path = file_paths[0]
-        new_file_path = destination_path(file_path, output) if isdir(output) else output
+        new_file_path = destination_path(file_path, output) if output.is_dir() else output
         prune_file(file_path, new_file_path, significant_bit_info=significant_bit_info,
                    variables_to_keep=variables_to_keep)
     elif len(file_paths) > 1:

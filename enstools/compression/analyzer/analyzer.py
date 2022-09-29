@@ -6,6 +6,7 @@
 
 """
 import logging
+from pathlib import Path
 from typing import Union, List, Tuple, Dict
 
 import numpy as np
@@ -190,8 +191,8 @@ def find_encodings_for_all_combinations(dataset: xarray.Dataset, options: Analys
     return encodings, metrics
 
 
-def analyze(file_paths: Union[List[str], str],
-            output_file: str = None,
+def analyze(file_paths: List[Path],
+            output_file: Path = None,
             constrains: str = "correlation_I:5,ssim_I:2",
             file_format: str = "yaml",
             compressor: str = None,
@@ -230,7 +231,7 @@ def analyze(file_paths: Union[List[str], str],
     return encoding, metrics
 
 
-def save_encoding(encoding: dict, output_file: str = None, file_format: str = "yaml"):
+def save_encoding(encoding: dict, output_file: Union[Path, str, None] = None, file_format: str = "yaml"):
     """
     Output the encoding dictionary to a file or to the stdout.
     :param encoding:
@@ -250,6 +251,7 @@ def save_encoding(encoding: dict, output_file: str = None, file_format: str = "y
     elif file_format == "yaml":
         import yaml
         if output_file:
+            output_file = Path(output_file)
             print("Compression options saved in: %s " % output_file)
             with open(output_file, "w") as outfile:
                 yaml.dump(encoding, outfile, sort_keys=True)

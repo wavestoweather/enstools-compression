@@ -21,7 +21,7 @@ def find_enstools_packages():
 
 # perform the actual install operation
 setup(name="enstools-compression",
-      version="0.1.6",
+      version="0.1.7",
       author="Oriol Tintó",
       author_email="oriol.tinto@lmu.de",
       long_description=long_description,
@@ -31,8 +31,8 @@ setup(name="enstools-compression",
       packages=find_enstools_packages(),
 
       install_requires=[
-          "enstools",
-          "enstools-encoding",
+          "enstools>=2022.9.3",
+          "enstools-encoding>=0.1.9",
           "zfpy",
       ],
       entry_points={

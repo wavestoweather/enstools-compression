@@ -18,8 +18,6 @@ compression_modes = {
 }
 
 
-
-
 @dataclass
 class AnalysisOptions:
     compressor: Compressors
@@ -29,7 +27,7 @@ class AnalysisOptions:
 
     def __init__(self,
                  compressor: Union[str, Compressors, None],
-                 mode: Union[str, Compressors, None],
+                 mode: Union[str, CompressionModes, None],
                  constrains: Union[None, str] = None,
                  thresholds: Union[None, dict] = None,
                  ):
@@ -105,7 +103,8 @@ def from_dict_to_csv(dictionary: dict) -> str:
     """
     Convert a dictionary to a csv string.
     """
-    return ",".join([f"{key}:{value}" for key,value in dictionary.items()])
+    return ",".join([f"{key}:{value}" for key, value in dictionary.items()])
+
 
 def from_csv_to_dict(csv: str) -> dict:
     """

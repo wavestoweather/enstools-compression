@@ -1,5 +1,5 @@
 from os.path import isfile
-from typing import Union
+from typing import Callable, Union
 from enstools.core.errors import EnstoolsError
 
 import numpy as np
@@ -16,7 +16,7 @@ def get_matching_scores(arguments: list) -> dict:
     from inspect import getmembers, isfunction, signature
     functions_list = getmembers(enstools.scores, isfunction)
 
-    def check_signature(function):
+    def check_signature(function: Callable):
         sig = signature(function)
         return all([arg in sig.parameters for arg in arguments])
 
@@ -38,8 +38,6 @@ class DataArrayMetrics:
     """
     First object oriented approach to avoid redundant computation of metrics. (i.e. don't compute mse several times)
     """
-    reference_values: np.ndarray
-    target_values: np.ndarray
     difference: np.ndarray
     available_metrics: list
 
@@ -77,7 +75,7 @@ class DataArrayMetrics:
         # Replace NaNs with a fill value.
         fill_value = -10000.
         if np.isnan(self.reference.values).any():
-            self.reference_values[np.isnan(self.reference.values)] = fill_value
+            self.reference.values[np.isnan(self.reference.values)] = fill_value
         if np.isnan(self.target.values).any():
             self.target.values[np.isnan(self.target.values)] = fill_value
 
