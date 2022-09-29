@@ -10,11 +10,14 @@ from functools import partial
 from os import rename, access, W_OK
 from os.path import isfile, isdir
 from typing import Union, List
+import xarray
+from pathlib import Path
+from enstools.io.paths import clean_paths
 
 from enstools.compression.emulation import emulate_compression_on_dataset
 
 
-def drop_variables(dataset, variables_to_keep: list):
+def drop_variables(dataset: xarray.Dataset, variables_to_keep: List[str]) -> xarray.Dataset:
     """
     Drop all the variables that are not in list variables_to_keep.
     Keeps the coordinates.
@@ -26,18 +29,18 @@ def drop_variables(dataset, variables_to_keep: list):
     return dataset.drop_vars(variables_to_drop)
 
 
-def fix_filename(file_name):
+def fix_filename(file_name: str) -> str:
     cases = [".grib2", ".grb"]
     for case in cases:
         file_name = file_name.replace(case, ".nc")
     return file_name
 
 
-def transfer(file_paths: Union[List[str], str],
-             output: str,
+def transfer(file_paths: Union[List[str], str, Path, List[Path]],
+             output: Path,
              compression: str = "lossless",
-             variables_to_keep: List[str] = None,
-             emulate=False,
+             variables_to_keep: List[str] = [],
+             emulate: bool = False,
              fill_na: Union[float, bool] = False,
              ) -> None:
     """
@@ -57,11 +60,12 @@ def transfer(file_paths: Union[List[str], str],
     variables_to_keep: list of strings
                 In case of only wanting to keep certain variables, pass the variables to keep as a list of strings.
     """
-    # If its a single file, just create a list with it.
-    if isinstance(file_paths, str):
-        file_paths = [file_paths]
+    file_paths = clean_paths(file_paths)
+    # Just make sure that output is a Path object
+    output = Path(output).resolve()
 
     from dask.diagnostics import ProgressBar
+
     with ProgressBar():
         # If we have a single file, we might accept a output filename instead of an output folder.
         # Some assertions first to prevent wrong usage.
@@ -70,11 +74,13 @@ def transfer(file_paths: Union[List[str], str],
         elif len(file_paths) == 1:
             file_path = file_paths[0]
             new_file_path = destination_path(file_path, output) if isdir(output) else output
-            transfer_file(file_path, new_file_path, compression, variables_to_keep, emulate=emulate, fill_na=fill_na)
+            transfer_file(file_path, new_file_path, compression,
+                          variables_to_keep, emulate=emulate, fill_na=fill_na)
         elif len(file_paths) > 1:
             # In case of having more than one file, check that output corresponds to a directory
-            assert isdir(output), "For multiple files, the output parameter should be a directory"
-            assert access(output, W_OK), "The output folder provided does not have write permissions"
+            assert output.is_dir(), "For multiple files, the output parameter should be a directory"
+            assert access(
+                output, W_OK), "The output folder provided does not have write permissions"
 
             transfer_multiple_files(
                 file_paths=file_paths,
@@ -87,13 +93,16 @@ def transfer(file_paths: Union[List[str], str],
 
 
 def transfer_multiple_files(
-        file_paths: Union[List[str], str],
-        output: str,
+        file_paths: List[Path],
+        output: Path,
         compression: str = "lossless",
         variables_to_keep: List[str] = None,
         emulate: bool = False,
         fill_na: Union[float, bool] = False
-):
+) -> None:
+    output = Path(output)
+    file_paths = clean_paths(paths=file_paths)
+
     from dask import compute
     # Create and fill the list of tasks
     tasks = []
@@ -105,7 +114,7 @@ def transfer_multiple_files(
         new_file_path = destination_path(file_path, output)
 
         # Create temporary file name and store it in the dictionary
-        temporary_file_path = f"{new_file_path}.tmp"
+        temporary_file_path = Path(f"{new_file_path}.tmp")
         temporary_names_dictionary[temporary_file_path] = new_file_path
 
         # Create task:
@@ -130,7 +139,7 @@ def transfer_multiple_files(
         rename(temporary_name, final_name)
 
 
-def transfer_file(origin: str, destination: str, compression: str, variables_to_keep: List[str] = None,
+def transfer_file(origin: Path, destination: Path, compression: str, variables_to_keep: List[str] = None,
                   compute: bool = True, emulate=False, fill_na: Union[float, bool] = False):
     """
     This function will copy a dataset while optionally applying compression.
@@ -169,11 +178,11 @@ def transfer_file(origin: str, destination: str, compression: str, variables_to_
         return write(dataset, destination, file_format="NC", compression=compression, compute=compute)
 
 
-def destination_path(origin_path: str, destination_folder: str):
+def destination_path(origin_path: Path, destination_folder: Path):
     """
     Function to obtain the destination file from the source file and the destination folder.
     If the source file has GRIB format (.grb) , it will be changed to netCDF (.nc).
-    
+
     Parameters
     ----------
     origin_path : string
@@ -187,35 +196,38 @@ def destination_path(origin_path: str, destination_folder: str):
     from os.path import join, basename, splitext
     from enstools.io.file_type import get_file_type
 
-    file_name = basename(origin_path)
+    file_name = origin_path.name
 
     file_format = get_file_type(file_name, only_extension=True)
     if file_format != "NC":
         bname, _ = splitext(file_name)
         file_name = bname + ".nc"
-    destination = join(destination_folder, file_name)
+    destination = destination_folder / file_name
     return destination
 
 
 def compress(
-        file_paths: Union[List[str], str],
-        output: str,
+        file_paths: List[Path],
+        output: Path,
         compression: Union[str, dict, None],
         nodes: int = 0,
-        variables_to_keep: List[str] = None, show_compression_ratios=False, emulate=False,
+        variables_to_keep: Union[List[str], None] = None,
+        show_compression_ratios=False,
+        emulate=False,
         fill_na: Union[float, bool] = False,
 ) -> None:
     """
     Copies a list of files to a destination folder, optionally applying compression.
     """
-
+    file_paths = clean_paths(file_paths)
+    output = Path(output)
     # In case of using automatic compression option, call here get_compression_parameters()
     if compression == "auto":
         from .analyzer import analyze
-        import os
-        compression_parameters_path = os.path.join(output, "compression_parameters.yaml")
+        compression_parameters_path = output / "compression_parameters.yaml"
         # By using thresholds = None we will be using the default values.
-        analyze(file_paths, output_file=compression_parameters_path)
+        analyze(file_paths,
+                output_file=compression_parameters_path)
         # Now lets continue setting compression = compression_parameters_path
         compression = compression_parameters_path
 
@@ -240,7 +252,8 @@ def compress(
     else:
         # Transfer will copy the files from its origin path to the output folder,
         # using read and write functions from enstools
-        transfer(file_paths, output, compression, variables_to_keep=variables_to_keep, emulate=emulate, fill_na=fill_na)
+        transfer(file_paths, output, compression,
+                 variables_to_keep=variables_to_keep, emulate=emulate, fill_na=fill_na)
 
     if show_compression_ratios:
         check_compression_ratios(file_paths, output)

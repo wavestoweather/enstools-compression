@@ -22,7 +22,11 @@ def emulate_compression_on_dataset(dataset: xarray.Dataset, compression: Union[s
     :return:
     """
     from enstools.core import cache
-    cache.unregister()
+    try:
+        cache.unregister()
+        cache_was_on = True
+    except KeyError:
+        cache_was_on = False
     if not in_place:
         dataset = dataset.copy(deep=True)
     # List variables that aren't coordinates
@@ -36,7 +40,8 @@ def emulate_compression_on_dataset(dataset: xarray.Dataset, compression: Union[s
         if var_compression and var_compression.compressor != Compressors.BLOSC:
             dataset[variable], dataset_metrics[variable] = emulate_compression_on_data_array(dataset[variable],
                                                                                              var_compression)
-    cache.register()
+    if cache_was_on:                                                                                             
+        cache.register()
     return dataset, dataset_metrics
 
 

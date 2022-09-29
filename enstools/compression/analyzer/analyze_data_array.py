@@ -8,7 +8,8 @@ import numpy as np
 import xarray
 
 from enstools.core.errors import EnstoolsError
-from enstools.encoding.api import compression_mode_aliases, compressor_aliases, Compressors, check_libpressio_availability
+from enstools.encoding.api import compression_mode_aliases, compressor_aliases, Compressors, \
+    check_libpressio_availability
 from enstools.encoding.rules import COMPRESSION_SPECIFICATION_SEPARATOR
 from .AnalysisCompressor import AnalysisCompressor
 from .AnalysisOptions import AnalysisOptions
@@ -63,8 +64,14 @@ def analyze_data_array(data_array: xarray.DataArray, options: AnalysisOptions) -
     #  Ignore warnings
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
+        direct_relation = not (COMPRESSION_RATIO_LABEL in options.thresholds)
+        direct_relation = True
         # Use bisection method to find optimal compression parameter.
-        parameter = bisection_method(parameter_range, constrain=constrain, fun=function_to_nullify)
+        parameter = bisection_method(
+            parameter_range,
+            constrain=constrain,
+            fun=function_to_nullify,
+            direct_relation=direct_relation)
 
         # Compute metrics
         # When aiming for a compression ratio some other metrics need to be provided too.
@@ -99,7 +106,7 @@ def define_functions_to_optimize(data_array: xarray.DataArray, options: Analysis
     counter = 0
 
     # Using a cache allows us to avoid recomputing when using the same parameters.
-    @functools.lru_cache
+    # @functools.lru_cache
     def get_metrics_from_parameter(parameter: float) -> dict:
         """
         This function will return a dictionary with different metrics computed with data that has been compressed

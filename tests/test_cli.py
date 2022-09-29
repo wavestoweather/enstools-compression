@@ -6,7 +6,7 @@ from os.path import isfile, join
 from enstools.encoding.compressors.availability_checks import check_sz_availability, check_libpressio_availability
 
 import pytest
-from tests.utils import TestClass
+from utils import TestClass
 
 
 class TestCommandLineInterface(TestClass):

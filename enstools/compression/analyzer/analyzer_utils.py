@@ -1,3 +1,4 @@
+import logging
 from typing import List, Dict, Callable
 
 import numpy as np
@@ -59,18 +60,29 @@ def get_parameter_range(data_array: xarray.DataArray, options: AnalysisOptions):
         raise EnstoolsError(f"Problem in {__file__}")
 
 
-def bisection_method(parameter_range: tuple, fun: callable = None, constrain: callable = None, depth: int = 0,
-                     max_depth: int = 50, last_value=None, retry_repeated=5, threshold=0.1):
+def bisection_method(parameter_range: tuple,
+                     fun: callable = None,
+                     constrain: callable = None,
+                     depth: int = 0,
+                     max_depth: int = 50,
+                     last_value=None,
+                     retry_repeated=5,
+                     threshold=0.1,
+                     direct_relation=True,
+                     ):
     # Get start and end from parameter range
     start, end = parameter_range
 
     # Get the middle point
     middle = (start + end) / 2
 
+    def comparison(value_at_middle: float, direct_relation: bool = True):
+        return (value_at_middle > 0.0) == direct_relation
+
     # Evaluate at the middle point
     value_at_middle = fun(middle)
     # TODO: use logging and a debug mode to print this kind of things
-    # print(start, end, f"{float(value_at_middle)=}")
+    logging.debug(f"{start=:.2e},{end=:.2e}{float(value_at_middle)=}")
 
     # If the value at the middle is positive (all thresholds are fulfilled) we can return the parameter at the middle,
     # otherwise select the safer one.
@@ -92,18 +104,17 @@ def bisection_method(parameter_range: tuple, fun: callable = None, constrain: ca
         return parameter_to_return
 
     # # Otherwise, set new parameter range and call the function again
-    if value_at_middle > 0.0:
+    if comparison(value_at_middle, direct_relation=direct_relation):
         new_start, new_end = start, middle
     else:
         new_start, new_end = middle, end
 
-    # The following approach would work for metrics that have an inverse relation with the parameter
-    # (i.e. higher tolerance also leads to higher compression ratio)
-
-    # if value_at_middle < 0.0:
-    #     new_start, new_end = start, middle
-    # else:
-    #     new_start, new_end = middle, end
-
-    return bisection_method((new_start, new_end), fun=fun, constrain=constrain, depth=depth + 1,
-                            last_value=value_at_middle, retry_repeated=retry_repeated, threshold=threshold)
+    return bisection_method((new_start, new_end),
+                            fun=fun,
+                            constrain=constrain,
+                            depth=depth + 1,
+                            last_value=value_at_middle,
+                            retry_repeated=retry_repeated,
+                            threshold=threshold,
+                            direct_relation=direct_relation,
+                            )
