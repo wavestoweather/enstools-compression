@@ -1,12 +1,17 @@
+"""
+Definition of the class LibpressioEmulator: an Emulator that uses ZFP.
+Can only work with the ZFP compressor.
+"""
+
 import numpy as np
 from sys import getsizeof
-from .AnalysisCompressor import AnalysisCompressor
+from enstools.compression.emulators.EmulatorClass import Emulator
 from enstools.encoding.api import compression_mode_aliases, Compressors
 from enstools.core.errors import EnstoolsError
 import zfpy
 
 
-class ZFPAnalysisCompressor(AnalysisCompressor):
+class ZFPEmulator(Emulator):
     def __init__(self, compressor_name, mode, parameter, uncompressed_data):
         mode_str = compression_mode_aliases[mode]
         if compressor_name != "zfp" and compressor_name != Compressors.ZFP:
@@ -31,6 +36,10 @@ class ZFPAnalysisCompressor(AnalysisCompressor):
 
     def decompress(self, compressed_data: np.array) -> np.array:
         return zfpy.decompress_numpy(compressed_data)
+
+    def compress_and_decompress(self, uncompressed_data: np.array) -> np.array:
+        compressed_data = self.compress(uncompressed_data=uncompressed_data)
+        return self.decompress(compressed_data=compressed_data)
 
     def compression_ratio(self):
         return self._compression_ratio

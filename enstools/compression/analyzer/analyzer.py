@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
     #
     # Routines to find optimal compression parameters to satisfy certain quality thresholds
@@ -15,40 +14,6 @@ import xarray
 from .AnalysisOptions import AnalysisOptions, AnalysisParameters
 from .analyze_data_array import analyze_data_array, ANALYSIS_DIAGNOSTIC_METRICS, COMPRESSION_RATIO_LABEL
 from enstools.compression.compressor import drop_variables
-
-
-def analyze_files(
-        file_paths: List[str],
-        options: AnalysisOptions,
-        grid: str = None,
-        fill_na: Union[float, bool] = False,
-        variables: List = None,
-):
-    """
-    Load the dataset and go variable by variable determining the optimal compression parameters
-
-    :param file_paths:
-    :param options:
-    :param grid:
-    :param fill_na: If provided, the missing values will be replaced with this value.
-    :param variables:
-    :return:
-    """
-    from enstools.io import read
-
-    # Load dataset, possibly using a grid file
-    if grid:
-        dataset = read(file_paths, constant=grid)
-    else:
-        dataset = read(file_paths)
-
-    if variables is not None:
-        dataset = drop_variables(dataset, variables)
-
-    if fill_na is not False:
-        dataset = dataset.fillna(fill_na)
-
-    return find_optimal_encoding(dataset, options)
 
 
 def find_optimal_encoding(dataset: xarray.Dataset, options: AnalysisOptions):
@@ -191,16 +156,16 @@ def find_encodings_for_all_combinations(dataset: xarray.Dataset, options: Analys
     return encodings, metrics
 
 
-def analyze(file_paths: List[Path],
-            output_file: Path = None,
-            constrains: str = "correlation_I:5,ssim_I:2",
-            file_format: str = "yaml",
-            compressor: str = None,
-            mode: str = None,
-            grid: str = None,
-            fill_na: Union[float, bool] = False,
-            variables: List = None,
-            ):
+def analyze_files(file_paths: List[Path],
+                  output_file: Path = None,
+                  constrains: str = "correlation_I:5,ssim_I:2",
+                  file_format: str = "yaml",
+                  compressor: str = None,
+                  mode: str = None,
+                  grid: str = None,
+                  fill_na: Union[float, bool] = False,
+                  variables: List = None,
+                  ):
     """
     Finds optimal compression parameters for a list of files to fulfill certain thresholds.
     If an output_file argument is provided it will output the dictionary in there (yaml or json allowed).
@@ -223,12 +188,42 @@ def analyze(file_paths: List[Path],
         f"{constrains}\n"
     )
     print()
-    options = AnalysisOptions(compressor=compressor, mode=mode, constrains=constrains)
-    encoding, metrics = analyze_files(file_paths, options, grid=grid, fill_na=fill_na, variables=variables)
+    from enstools.io import read
+
+    # Load dataset, possibly using a grid file
+    if grid:
+        dataset = read(file_paths, constant=grid)
+    else:
+        dataset = read(file_paths)
+
+    encoding, metrics = analyze_dataset(dataset=dataset,
+                                        constrains=constrains,
+                                        compressor=compressor,
+                                        mode=mode,
+                                        fill_na=fill_na,
+                                        variables=variables,
+                                        )
 
     save_encoding(encoding, output_file, file_format)
 
     return encoding, metrics
+
+
+def analyze_dataset(dataset: xarray.Dataset,
+                    constrains: str = "correlation_I:5,ssim_I:2",
+                    compressor: str = None,
+                    mode: str = None,
+                    fill_na: Union[float, bool] = False,
+                    variables: List = None,
+                    ):
+    if variables is not None:
+        dataset = drop_variables(dataset, variables)
+
+    if fill_na is not False:
+        dataset = dataset.fillna(fill_na)
+
+    options = AnalysisOptions(compressor=compressor, mode=mode, constrains=constrains)
+    return find_optimal_encoding(dataset, options)
 
 
 def save_encoding(encoding: dict, output_file: Union[Path, str, None] = None, file_format: str = "yaml"):

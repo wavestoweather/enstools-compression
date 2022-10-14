@@ -11,40 +11,40 @@ folders = None
 
 class TestAnalyzer(TestClass):
     def test_analyzer(self):
-        from enstools.compression.api import analyze
-        input_tempdir = self.input_tempdir
+        from enstools.compression.api import analyze_files
+        input_tempdir = self.input_directory_path
         # Check that the compression without specifying compression parameters works
         datasets = ["dataset_%iD.nc" % dimension for dimension in range(1, 4)]
         for ds in datasets:
-            input_path = join(input_tempdir.getpath(), ds)
-            analyze(file_paths=[input_path])
+            input_path = input_tempdir / ds
+            analyze_files(file_paths=[input_path])
 
     def test_zfp_analyzer(self):
-        from enstools.compression.api import analyze
-        input_tempdir = self.input_tempdir
+        from enstools.compression.api import analyze_files
+        input_tempdir = self.input_directory_path
         # Check that the compression without specifying compression parameters works
         datasets = ["dataset_%iD.nc" % dimension for dimension in range(1, 4)]
         for ds in datasets:
-            input_path = join(input_tempdir.getpath(), ds)
-            analyze(file_paths=[input_path], compressor="zfp")
+            input_path = input_tempdir / ds
+            analyze_files(file_paths=[input_path], compressor="zfp")
 
     def test_inverse_analyzer(self):
         """
         This tests checks that we can find compression parameters to fulfill a certain compression ratio.
         """
-        from enstools.compression.api import analyze
+        from enstools.compression.api import analyze_files
         from enstools.compression.analyzer.AnalysisOptions import from_csv_to_dict
         # The resulting compression ratio should be within this tolerance.
         TOLERANCE = 1
         cr_label = "compression_ratio"
-        input_tempdir = self.input_tempdir
+        input_tempdir = self.input_directory_path
         constrains = "compression_ratio:5"
         thresholds = from_csv_to_dict(constrains)
         # Check that the compression without specifying compression parameters works
         datasets = ["dataset_%iD.nc" % dimension for dimension in range(2, 4)]
         for ds in datasets:
-            input_path = join(input_tempdir.getpath(), ds)
-            encodings, metrics = analyze(file_paths=[input_path], constrains=constrains)
+            input_path = input_tempdir / ds
+            encodings, metrics = analyze_files(file_paths=[input_path], constrains=constrains)
             if not metrics:
                 raise AssertionError("Metrics shouldn't be empty")
 
@@ -55,50 +55,53 @@ class TestAnalyzer(TestClass):
 
     @pytest.mark.skipif(not check_libpressio_availability(), reason="Requires libpressio")
     def test_sz_analyzer(self):
-        from enstools.compression.api import analyze
-        input_tempdir = self.input_tempdir
+        from enstools.compression.api import analyze_files
+        input_tempdir = self.input_directory_path
         # Check that the compression without specifying compression parameters works
         datasets = ["dataset_%iD.nc" % dimension for dimension in range(1, 4)]
         for ds in datasets:
-            input_path = join(input_tempdir.getpath(), ds)
-            analyze(file_paths=[input_path], compressor="sz")
+            input_path = input_tempdir / ds
+            analyze_files(file_paths=[input_path], compressor="sz")
 
     def test_constrains(self):
-        from enstools.compression.api import analyze
-        input_tempdir = self.input_tempdir
+        from enstools.compression.api import analyze_files
+        input_tempdir = self.input_directory_path
         # Check that the compression without specifying compression parameters works
         datasets = ["dataset_%iD.nc" % dimension for dimension in range(1, 4)]
-        constrains = "correlation_I:3,ssim_I:1,nrmse_I:1"
         for ds in datasets:
-            input_path = join(input_tempdir.getpath(), ds)
-            analyze(file_paths=[input_path], constrains=constrains)
+            input_path = input_tempdir / ds
+            analyze_files(file_paths=[input_path],
+                          constrains="correlation_I:3,ssim_I:1,nrmse_I:1",
+                          # Keep the analysis to a single compressor and mode to speed up tests
+                          compressor="zfp",
+                          mode="rate",
+                          )
 
     def test_wrong_constrain(self):
-        from enstools.compression.api import analyze
+        from enstools.compression.api import analyze_files
         from enstools.core.errors import EnstoolsError
-        input_tempdir = self.input_tempdir
+        input_tempdir = self.input_directory_path
         # Check that the compression without specifying compression parameters works
         datasets = ["dataset_%iD.nc" % dimension for dimension in range(1, 4)]
         constrains = "dummy_metric:3"
         with pytest.raises(EnstoolsError):
             for ds in datasets:
-                input_path = join(input_tempdir.getpath(), ds)        
-                analyze(file_paths=[input_path], constrains=constrains)
+                input_path = input_tempdir / ds
+                analyze_files(file_paths=[input_path], constrains=constrains)
 
     def test_custom_metric(self):
         from enstools.scores import mean_square_error, add_score_from_file
-        from enstools.compression.api import analyze
-        
-        input_tempdir = self.input_tempdir
-        tempdir_path = input_tempdir.getpath()
+        from enstools.compression.api import analyze_files
+
+        input_tempdir = self.input_directory_path
 
         # Create a fake plugin copying an existing score 
         plugin_name = "dummy_metric"
-        plugin_path = f"{tempdir_path}/{plugin_name}.py"
+        plugin_path = input_tempdir / f"{plugin_name}.py"
 
         # Copy the function mean_square_error
         dummy_function = mean_square_error
-        
+
         # Get the source code
         import inspect
         lines = inspect.getsource(dummy_function)
@@ -117,5 +120,10 @@ class TestAnalyzer(TestClass):
         constrains = f"{plugin_name}:3"
 
         for ds in datasets:
-            input_path = join(input_tempdir.getpath(), ds)        
-            analyze(file_paths=[input_path], constrains=constrains)
+            input_path = input_tempdir / ds
+            analyze_files(file_paths=[input_path],
+                          constrains=constrains,
+                          # Keep the analysis to a single compressor and mode to speed up tests
+                          compressor="zfp",
+                          mode="rate",
+                          )

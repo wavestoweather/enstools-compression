@@ -19,13 +19,12 @@ class TestSZ(TestClass):
 
     @pytest.mark.skipif(not check_libpressio_availability(), reason="Requires libpressio")
     def test_sz_analyzer(self):
-        from enstools.compression.api import analyze
-        input_tempdir = self.input_tempdir
+        from enstools.compression.api import analyze_files
         # Check that the compression without specifying compression parameters works
         datasets = ["dataset_%iD.nc" % dimension for dimension in range(1, 4)]
         for ds in datasets:
-            input_path = join(input_tempdir.getpath(), ds)
-            analyze(file_paths=[input_path], compressor="sz")
+            input_path = self.input_directory_path / ds
+            analyze_files(file_paths=input_path, compressor="sz")
 
     @pytest.mark.skipif(not check_sz_availability(), reason="Requires SZ")
     def test_compress_sz_pw_rel(self):
