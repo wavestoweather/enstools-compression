@@ -1,6 +1,6 @@
 from .pruner import pruner
 from .compressor import compress
-from .analyzer.analyzer import analyze
+from .analyzer.analyzer import analyze_files, analyze_dataset
 from .significant_bits import analyze_file_significant_bits
 from .evaluator import evaluate
 from .cli import main as cli

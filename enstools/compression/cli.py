@@ -156,7 +156,7 @@ def add_subparser_analyzer(subparsers):
     subparser.add_argument("--output", "-o", dest="output", default=None, type=str,
                            help="Path to the file where the configuration will be saved."
                                 "If not provided will be print in the stdout.",
-                                )
+                           )
     subparser.add_argument("--compressor", "-c", dest="compressor", default=None, type=str,
                            help="Which compressor will be used. Options are zfp, sz or all.",
                            )
@@ -164,13 +164,13 @@ def add_subparser_analyzer(subparsers):
                            help="Which mode will be used. The options depend on the compressor."
                                 "For sz: abs, rel, pw_rel. For zfp: accuracy, rate, precision."
                                 "Also it is possible to use 'all'",
-                                )
+                           )
     subparser.add_argument("--grid", "-g", dest="grid", default=None, type=str,
                            help="Path to the file containing grid information.",
                            )
     subparser.add_argument("files", type=str, nargs="+",
                            help='List of files to compress. '
-                           'Multiple files and regex patterns are allowed.',
+                                'Multiple files and regex patterns are allowed.',
                            )
 
     subparser.add_argument("--plugins", type=str, nargs="*",
@@ -183,8 +183,6 @@ def add_subparser_analyzer(subparsers):
                            help="List of variables to analyze."
                                 "Must be a list of comma separated values: i.e. vor,temp,qv"
                                 "Default=None")
-
-
 
     subparser.set_defaults(which='analyzer')
 
@@ -215,8 +213,8 @@ def call_analyzer(args):
         for plugin in plugins:
             enstools.scores.add_score_from_file(plugin)
 
-    from enstools.compression.api import analyze
-    analyze(
+    from enstools.compression.api import analyze_files
+    analyze_files(
         file_paths=file_paths,
         output_file=output_file,
         constrains=constrains,
@@ -225,7 +223,7 @@ def call_analyzer(args):
         grid=grid,
         fill_na=fill_na,
         variables=variables,
-        )
+    )
 
 
 ###############################

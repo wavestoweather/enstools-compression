@@ -1,3 +1,6 @@
+from pathlib import Path
+
+
 def create_synthetic_dataset(directory: str) -> None:
     """
     Creates three synthetic netcdf datasets (1d,2d,3d) into the provided directory.
@@ -10,7 +13,7 @@ def create_synthetic_dataset(directory: str) -> None:
     from scipy.ndimage import gaussian_filter
     from os.path import join
     # Create synthetic datasets
-    nx, ny, nz, t = 360, 91, 31, 10
+    nx, ny, nz, t = 120, 91, 31, 2
     lon = np.linspace(-180, 180, nx)
     lat = np.linspace(-90, 90, ny)
     levels = np.array(range(nz))
@@ -59,18 +62,16 @@ def wrapper(cls, compression=None):
     import enstools.compression.api
     import enstools.io
     from os.path import join
-    input_tempdir = cls.input_tempdir
-    output_tempdir = cls.output_tempdir
     # Check that the compression without specifying compression parameters works
     datasets = ["dataset_%iD.nc" % dimension for dimension in range(1, 4)]
     for ds in datasets:
-        input_path = join(input_tempdir.getpath(), ds)
-        output_path = output_tempdir.getpath()
-        # Import and launch compress function
-        enstools.compression.api.compress([input_path], output_path, compression=compression, nodes=0)
+        input_path = cls.input_directory_path / ds
+        output_file_path = cls.output_directory_path / ds
+        # Import and launch compress functions
+        enstools.compression.api.compress(input_path, output_file_path, compression=compression, nodes=0)
 
         # Check that the output file can be loaded
-        with enstools.io.read(join(output_path, ds)) as ds_out:
+        with enstools.io.read(output_file_path) as ds_out:
             ds_out.load()
 
 
@@ -90,12 +91,15 @@ class TestClass:
         """
         from enstools.core.tempdir import TempDir
         # Create temporary directory in which we'll put some synthetic datasets
-        cls.input_tempdir = TempDir(check_free_space=False)
-        cls.output_tempdir = TempDir(check_free_space=False)
-        create_synthetic_dataset(cls.input_tempdir.getpath())  # noqa
+        cls._input_tempdir = TempDir(check_free_space=False)
+        cls._output_tempdir = TempDir(check_free_space=False)
+        # Get path objects
+        cls.input_directory_path = Path(cls._input_tempdir.getpath())
+        cls.output_directory_path = Path(cls._output_tempdir.getpath())
+        create_synthetic_dataset(cls.input_directory_path)  # noqa
 
     @classmethod
     def teardown_class(cls):
         # release resources
-        cls.input_tempdir.cleanup()  # noqa
-        cls.output_tempdir.cleanup()  # noqa
+        cls._input_tempdir.cleanup()  # noqa
+        cls._output_tempdir.cleanup()  # noqa

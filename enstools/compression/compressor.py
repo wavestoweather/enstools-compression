@@ -223,11 +223,13 @@ def compress(
     output = Path(output)
     # In case of using automatic compression option, call here get_compression_parameters()
     if compression == "auto":
-        from .analyzer import analyze
-        compression_parameters_path = output / "compression_parameters.yaml"
+        from .analyzer import analyze_files
+        if output.is_dir():
+            compression_parameters_path = output / "compression_parameters.yaml"
+        else:
+            compression_parameters_path = output.parent.resolve() / "compression_parameters.yaml"
         # By using thresholds = None we will be using the default values.
-        analyze(file_paths,
-                output_file=compression_parameters_path)
+        analyze_files(file_paths=file_paths,output_file=compression_parameters_path)
         # Now lets continue setting compression = compression_parameters_path
         compression = compression_parameters_path
 

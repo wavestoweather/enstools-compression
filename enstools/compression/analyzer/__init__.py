@@ -1,1 +1,1 @@
-from .analyzer import analyze
+from .analyzer import analyze_files, analyze_dataset

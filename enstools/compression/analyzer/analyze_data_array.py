@@ -1,5 +1,4 @@
 import copy
-import functools
 import logging
 from typing import Tuple, Type, Callable
 import warnings
@@ -11,10 +10,9 @@ from enstools.core.errors import EnstoolsError
 from enstools.encoding.api import compression_mode_aliases, compressor_aliases, Compressors, \
     check_libpressio_availability
 from enstools.encoding.rules import COMPRESSION_SPECIFICATION_SEPARATOR
-from .AnalysisCompressor import AnalysisCompressor
+from enstools.compression.emulators.EmulatorClass import Emulator
 from .AnalysisOptions import AnalysisOptions
-from .LibpressioAnalysisCompressor import LibpressioAnalysisCompressor
-from .ZFPAnalysisCompressor import ZFPAnalysisCompressor
+from enstools.compression.emulators import LibpressioEmulator, ZFPEmulator, FilterEmulator
 from .analyzer_utils import get_metrics, get_parameter_range, bisection_method
 
 # These metrics will be used to select within the different encodings when aiming at a certain compression ratio.
@@ -23,15 +21,24 @@ COMPRESSION_RATIO_LABEL = "compression_ratio"
 counter = 0
 
 
-def get_compressor_factory() -> Type[AnalysisCompressor]:
+def get_compressor_factory(name="libpressio") -> Type[Emulator]:
     """
     This function returns a Compressor object which is able to compress and decompress data.
     The selection here is made based on the availability of LibPressio.
     """
-    if check_libpressio_availability():
-        return LibpressioAnalysisCompressor
+    if name == "filters":
+        return FilterEmulator
+    elif name == "zfpy":
+        return ZFPEmulator
+    elif name == "libpressio":
+        if check_libpressio_availability():
+            return LibpressioEmulator
+        else:
+            logging.warning("libpressio is not available, using FilterEmulator instead")
+            return FilterEmulator
     else:
-        return ZFPAnalysisCompressor
+        raise NotImplementedError(f"Options are 'filters', 'zfpy' and 'libpressio'")
+
 
 
 def analyze_data_array(data_array: xarray.DataArray, options: AnalysisOptions) -> Tuple[str, dict]:
@@ -105,6 +112,8 @@ def define_functions_to_optimize(data_array: xarray.DataArray, options: Analysis
     global counter
     counter = 0
 
+    compressor_factory = get_compressor_factory()
+
     # Using a cache allows us to avoid recomputing when using the same parameters.
     # @functools.lru_cache
     def get_metrics_from_parameter(parameter: float) -> dict:
@@ -114,9 +123,8 @@ def define_functions_to_optimize(data_array: xarray.DataArray, options: Analysis
         """
         global counter
         counter += 1
-        compressor_factory = get_compressor_factory()
 
-        if compressor_factory == ZFPAnalysisCompressor and options.compressor != Compressors.ZFP:
+        if compressor_factory == ZFPEmulator and options.compressor != Compressors.ZFP:
             raise EnstoolsError(f"Trying to use ZFP analysis compressor for compressor {options.compressor}")
 
         target = data_array.copy(deep=True)
@@ -125,10 +133,8 @@ def define_functions_to_optimize(data_array: xarray.DataArray, options: Analysis
         uncompressed_data = data_array.values
         # Create compressor for case
         analysis_compressor = compressor_factory(options.compressor, options.mode, parameter, uncompressed_data)
-        # Compress data
-        compressed = analysis_compressor.compress(uncompressed_data)
-        # Decompress data
-        decompressed = analysis_compressor.decompress(compressed)
+        # Compress and decompress data
+        decompressed = analysis_compressor.compress_and_decompress(uncompressed_data)
         # Assign values to target data_array (need to use enstools metrics)
         target.values = decompressed
 
