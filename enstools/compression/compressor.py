@@ -66,30 +66,37 @@ def transfer(file_paths: Union[List[str], str, Path, List[Path]],
 
     from dask.diagnostics import ProgressBar
 
-    with ProgressBar():
-        # If we have a single file, we might accept a output filename instead of an output folder.
-        # Some assertions first to prevent wrong usage.
-        if len(file_paths) == 0:
-            raise AssertionError("file_paths can't be an empty list")
-        elif len(file_paths) == 1:
-            file_path = file_paths[0]
-            new_file_path = destination_path(file_path, output) if isdir(output) else output
-            transfer_file(file_path, new_file_path, compression,
-                          variables_to_keep, emulate=emulate, fill_na=fill_na)
-        elif len(file_paths) > 1:
-            # In case of having more than one file, check that output corresponds to a directory
-            assert output.is_dir(), "For multiple files, the output parameter should be a directory"
-            assert access(
-                output, W_OK), "The output folder provided does not have write permissions"
+    use_progress_bar = False
 
-            transfer_multiple_files(
-                file_paths=file_paths,
-                output=output,
-                compression=compression,
-                variables_to_keep=variables_to_keep,
-                emulate=emulate,
-                fill_na=fill_na,
-            )
+    if use_progress_bar:
+        p = ProgressBar()
+        p.register()
+
+    # If we have a single file, we might accept a output filename instead of an output folder.
+    # Some assertions first to prevent wrong usage.
+    if len(file_paths) == 0:
+        raise AssertionError("file_paths can't be an empty list")
+    elif len(file_paths) == 1:
+        file_path = file_paths[0]
+        new_file_path = destination_path(file_path, output) if isdir(output) else output
+        transfer_file(file_path, new_file_path, compression,
+                      variables_to_keep, emulate=emulate, fill_na=fill_na)
+    elif len(file_paths) > 1:
+        # In case of having more than one file, check that output corresponds to a directory
+        assert output.is_dir(), "For multiple files, the output parameter should be a directory"
+        assert access(
+            output, W_OK), "The output folder provided does not have write permissions"
+
+        transfer_multiple_files(
+            file_paths=file_paths,
+            output=output,
+            compression=compression,
+            variables_to_keep=variables_to_keep,
+            emulate=emulate,
+            fill_na=fill_na,
+        )
+    if use_progress_bar:
+        p.unregister()
 
 
 def transfer_multiple_files(
