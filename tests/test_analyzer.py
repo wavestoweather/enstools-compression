@@ -90,14 +90,42 @@ class TestAnalyzer(TestClass):
                 analyze_files(file_paths=[input_path], constrains=constrains)
 
     def test_custom_metric(self):
+        from enstools.scores import mean_square_error, register_score
+        from enstools.compression.api import analyze_files
+
+        input_tempdir = self.input_directory_path
+
+        # Create a fake plugin copying an existing score
+        custom_metric_name = "dummy_metric"
+
+        # Copy the function mean_square_error
+        dummy_function = mean_square_error
+
+        # Add the function inside the file as a new score
+        register_score(function=dummy_function, name=custom_metric_name)
+
+        # Check that the analysis using a custom metric defined with a plugin works
+        datasets = ["dataset_%iD.nc" % dimension for dimension in range(1, 4)]
+        constrains = f"{custom_metric_name}:3"
+
+        for ds in datasets:
+            input_path = input_tempdir / ds
+            analyze_files(file_paths=[input_path],
+                          constrains=constrains,
+                          # Keep the analysis to a single compressor and mode to speed up tests
+                          compressor="zfp",
+                          mode="rate",
+                          )
+
+    def test_custom_metric_from_file(self):
         from enstools.scores import mean_square_error, add_score_from_file
         from enstools.compression.api import analyze_files
 
         input_tempdir = self.input_directory_path
 
         # Create a fake plugin copying an existing score 
-        plugin_name = "dummy_metric"
-        plugin_path = input_tempdir / f"{plugin_name}.py"
+        custom_metric_name = "dummy_metric"
+        custom_metric_path = input_tempdir / f"{custom_metric_name}.py"
 
         # Copy the function mean_square_error
         dummy_function = mean_square_error
@@ -105,19 +133,19 @@ class TestAnalyzer(TestClass):
         # Get the source code
         import inspect
         lines = inspect.getsource(dummy_function)
-        function_code = "".join(lines).replace(dummy_function.__name__, plugin_name)
+        function_code = "".join(lines).replace(dummy_function.__name__, custom_metric_name)
         # Add xarray import to make it complete
         function_code = f"import xarray\n{function_code}"
         # Write it to a file
-        with open(plugin_path, "w") as f:
+        with open(custom_metric_path, "w") as f:
             f.write(function_code)
 
         # Add the function inside the file as a new score
-        add_score_from_file(plugin_path)
+        add_score_from_file(custom_metric_path)
 
         # Check that the analysis using a custom metric defined with a plugin works
         datasets = ["dataset_%iD.nc" % dimension for dimension in range(1, 4)]
-        constrains = f"{plugin_name}:3"
+        constrains = f"{custom_metric_name}:3"
 
         for ds in datasets:
             input_path = input_tempdir / ds
