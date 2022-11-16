@@ -11,6 +11,14 @@ try:
 except FileNotFoundError:
     long_description = ""
 
+
+def get_version():
+    from pathlib import Path
+    version_path = Path(__file__).parent / "VERSION"
+    with version_path.open() as version_file:
+        return version_file.read().strip()
+
+
 def find_enstools_packages():
     """
     Find the packages inside the enstools folder.
@@ -21,7 +29,7 @@ def find_enstools_packages():
 
 # perform the actual install operation
 setup(name="enstools-compression",
-      version="0.1.8",
+      version=get_version(),
       author="Oriol Tintó",
       author_email="oriol.tinto@lmu.de",
       long_description=long_description,
@@ -34,6 +42,7 @@ setup(name="enstools-compression",
           "enstools>=2022.9.3",
           "enstools-encoding>=0.1.9",
           "zfpy",
+          "hdf5plugin",
       ],
       entry_points={
           'console_scripts': [
