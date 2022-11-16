@@ -4,72 +4,88 @@ Single access for different enstools-compressor utilities
 
 # Few help messages
 compressor_help_text = """
-Few different examples
+Examples
+--------
 
 -Single file:
-%(prog)s -o /path/to/destination/folder /path/to/file/1 
+    >>> enstools-compressions "input.nc" -o "output/folder/" 
+    or
+    >>> enstools-compressions "input.nc" -o "output_file.nc"
 
 -Multiple files:
-%(prog)s -o /path/to/destination/folder /path/to/file/1 /path/to/file/2
+    >>> enstools-compressions "input_1.nc" "input_2.nc" -o "output/folder/"
 
 -Path pattern:
-%(prog)s -o /path/to/destination/folder /path/to/multiple/files/* 
+    >>> enstools-compressions "input_files_*" -o "output/folder/"  
 
-Launch a SLURM job for workers:
-%(prog)s -o /path/to/destination/folder /path/to/multiple/files/* --nodes 4
 
 To use custom compression parameters:
-%(prog)s -o /path/to/destination/folder /path/to/multiple/files/* --compression compression_specification
+    >>> enstools-compressions "input_files_*" -o "output/folder/" --compression compression_specification
 
-Where compression_specification can contain the string that defines the compression options that will be used in the whole dataset,
-        or a filepath to a configuration file in which we might have per variable specification.
-        For lossless compression, we can choose the backend and the compression leven as follows
-            "lossless:backend:compression_level(from 1 to 9)"
-        The backend must be one of the following options:
-                'blosclz'
-                'lz4'
-                'lz4hc'
-                'snappy'
-                'zlib'
-                'zstd'
-        For lossy compression, we can choose the compressor (wight now only zfp is implemented),
-        the method and the method parameter (the accuracy, the precision or the rate).
-        Some examples:
-            "lossless"
-            "lossy"
-            "lossless,zlib,5"
-            "lossy,zfp,accuracy,0.00001"
-            "lossy,zfp,precision,12"
+Where compression_specification can be a string that follows the Compression Specification Format (see more details in enstools-encoding.readthedocs.com) or a filepath
+to a configuration file in which we might have per variable specification.
+
+For lossless compression, we can choose the backend and the compression leven as follows
+    >>> lossless,backend,compression_level(from 1 to 9)
+    
+The backend must be one of the following options:
+        - blosclz
+        - lz4
+        - lz4hc
+        - snappy
+        - zlib
+        - zstd
+
+For lossy compression, we can choose the compressor (sz or zfp),
+the method and the method parameter.
+
+    >>> lossy,compressor,mode,parameter
+
+Some examples:
+    - lossless
+    - lossless,zlib,5
+    - lossy,zfp,accuracy,0.00001
+    - lossy,zfp,precision,12
+    - lossy,zfp,rate,3.2
+    - lossy,sz,abs,0.1
+    - lossy,sz,rel,0.0001
+    - lossy,sz,pw_rel,1.e-6
             
-        If using a configuration file, the file should follow a json format and can contain per-variable values.
-        It is also possible to define a default option. For example:
-        { "default": "lossless",
-          "temp": "lossy,zfp,accuracy,0.1",
-          "qv": "lossy,zfp,accuracy,0.00001"        
-        }
+If using a configuration file, the file should follow a yaml format and can contain per-variable values.
+It is also possible to define a default option. For example:
+
+    .. highlight:: python
+    .. code-block:: yaml
+        
+        default: lossless
+        temp: lossy,zfp,accuracy,0.1
+        qv: lossy,sz,pw_rel,0.0001
 
 
 So, few examples with custom compression would be:
 
-%(prog)s -o /path/to/destination/folder /path/to/multiple/files/* --compression lossless
+    >>> enstools-compressions "input_files_*" -o "output/folder/" --compression lossless
 
-%(prog)s -o /path/to/destination/folder /path/to/multiple/files/* --compression lossless,blosclz,9
+    >>> enstools-compressions "input_files_*" -o "output/folder/" --compression lossless,blosclz,9
 
-%(prog)s -o /path/to/destination/folder /path/to/multiple/files/* --compression lossy
+    >>> enstools-compressions "input_files_*" -o "output/folder/" --compression lossy,zfp,rate,3.2
+    
+    >>> enstools-compressions "input_files_*" -o "output/folder/" --compression lossy,sz,abs,0.01
 
-%(prog)s -o /path/to/destination/folder /path/to/multiple/files/* --compression lossy,zfp,rate,4
+    >>> enstools-compressions "input_files_*" -o "output/folder/" --compression compression_parameters.yaml
 
-%(prog)s -o /path/to/destination/folder /path/to/multiple/files/* --compression compression_paramters.json
+Also, it is possible to automatically find which are the compression parameters that must be applied
+to each variable in order to maintain a 0.99999 Pearson correlation and a 0.99 structural similarity.
+Be aware that that will cause an overhead due to the necessary time to find the appropriate parameters. 
 
+    >>> enstools-compressions "input_files_*" -o "output/folder/" --compression auto
 
-Last but not least, now it is possible to automatically find which are the compression parameters that must be applied
-to each variable in order to maintain a 0.99999 Pearson correlation
+It is possible to parallelize the compression of multiple files by launch a SLURM job for workers.
+To do that, specify the number of nodes to use:
 
-%(prog)s -o /path/to/destination/folder /path/to/multiple/files/* --compression auto
-
+    >>> enstools-compressions -o "output/folder/" "input_files_*" --nodes 4
 
 """
-
 
 # For each possible usage (compress, analyze, ...) we will define a function to add
 # the corresponding command line arguments to the parser and another one to manage the call
@@ -332,7 +348,7 @@ def expand_paths(string: str):
 
 ###############################
 
-def main():
+def get_parser():
     # Create parser
     import argparse
 
@@ -343,6 +359,18 @@ def main():
     # Add the different subparsers.
     # If willing to add new parser, this is the function where to look at.
     add_subparsers(parser)
+    return parser
+
+
+def main():
+    """
+    Entry point of the Command Line Interface for enstools-compression
+    Returns
+    -------
+
+    """
+    parser = get_parser()
+
     # Parse the command line arguments
     args = parser.parse_args()
 
