@@ -39,8 +39,8 @@ setup(name="enstools-compression",
       packages=find_enstools_packages(),
 
       install_requires=[
-          "enstools>=2022.9.3",
-          "enstools-encoding>=0.1.9",
+          "enstools>=2022.11",
+          "enstools-encoding>=2022.11",
           "zfpy",
           "hdf5plugin",
       ],
