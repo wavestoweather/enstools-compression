@@ -224,7 +224,31 @@ def compress(
         fill_na: Union[float, bool] = False,
 ) -> None:
     """
-    Copies a list of files to a destination folder, optionally applying compression.
+    Copies a list of files to the destination applying compression.
+
+    Parameters
+    ----------
+    file_paths:
+    a path or a list of paths. Can be strings or proper paths (pathlib.Path)
+    output:
+    destination folder
+    compression:
+    string following the Compression Specification Format or dictionary with different entries for different variables.
+    nodes:
+    can be used to parallelize compression using a slurm cluster.
+    variables_to_keep:
+    list of variables to keep
+    show_compression_ratios:
+    to activate printing of compression ratios
+    emulate: bool
+    if True, the files are compressed and uncompressed, so the effects of the compression are present but the files
+    are not actually compressed. Useful for testing with software that is not hdf5 capable.
+    fill_na: float or False
+    Fill the NaN values with a float value
+
+    Returns
+    -------
+
     """
     file_paths = clean_paths(file_paths)
     output = Path(output)
