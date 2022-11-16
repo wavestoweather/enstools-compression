@@ -18,7 +18,6 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
     'sphinxcontrib.autoprogram',
-    'sphinxarg.ext',
     'numpydoc',
 ]
 
