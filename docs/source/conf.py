@@ -25,6 +25,7 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
     'sphinxcontrib.autoprogram',
+    'sphinx_design',
     'numpydoc',
 ]
 

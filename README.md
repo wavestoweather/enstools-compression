@@ -1,55 +1,34 @@
-# [Ensemble Tools - Compression](https://github.com/wavestoweather/enstools-compression)
-
-This package extends [Ensemble Tools](https://github.com/wavestoweather/enstools)
-with several tools to enable compression for weather data. 
+# enstools-compression [![Documentation Status](https://readthedocs.org/projects/enstools/badge/?version=latest)](https://enstools-compression.readthedocs.io/en/latest/?badge=latest)
 
 
-# Installation using pip
+This package extends [enstools](github.com/wavestoweather/enstools) to enable **lossy** and **lossless** compression 
+by using **HDF5 filters**.
 
-`pip` is the easiest way to install `enstools-compression` along with all dependencies,
-including the main **enstools** package.
-It is recommended and not necessary to do that in a separate virtual environment. 
+Also, it contains a set of tools to help to find appropriate compression specifications.
+It includes a **Command Line Interface** to access its features from the command line
 
-## Preparation of a local environment
+For example:
+```bash
+enstools-compression compress "input.nc" -o "output.nc" --compression "lossless"
+```
 
-The steps outlined here can be done inside of a working-copy of this,
-repository. The created directory `venv` will be ignored by git.
+It has been developed under the [Waves to Weather - Transregional Collaborative Research 
+Project (SFB/TRR165)](https://wavestoweather.de). 
 
-At first create a new python virtual environment:
+# Installation
 
-    python3 -m venv --prompt=enstools-compression venv
-
-That will create a new folder `venv` containing the new environment. To use
-this environment, we need to activate it:
-
-    source venv/bin/activate
-
-Next we
-need to update `pip` and install `wheel`. Both are required in up-to-date 
-versions for the installation to run:
-
-    pip install --upgrade pip wheel
-
-## Installation
-
-For development, you can create a clone of this repository and install that
-local copy in development mode into your virtual environment. This is 
-especially useful if you plan to edit the code of `enstools-compression`. Python scripts
-using the virtual environment will immediately see all your changes with the
-need to reinstall anything.
-
-    git clone https://github.com/wavestoweather/enstools-compression.git
-    cd enstools-compression
-    pip install -e .
-
-If you have no plans to modify any code, then you can install `enstools-compression`
-without creating a local working-copy before:
+`pip` is the easiest way to install `enstools-compression` along with all dependencies.
 
     pip install enstools-compression
 
+
+# Documentation
+
+Explore [our documentation](https://enstools-compression.readthedocs.io).          
+
 # Acknowledgment and license
 
-Ensemble Tools - Compression (`enstools-compression`) is a collaborative development within
+Ensemble Tools (`enstools`) is a collaborative development within
 Waves to Weather (SFB/TRR165) coordinated by the subproject 
 [Z2](https://www.wavestoweather.de/research_areas/phase2/z2) and funded by the
 German Research Foundation (DFG).
