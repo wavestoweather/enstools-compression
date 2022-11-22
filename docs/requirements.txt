@@ -1,3 +1,4 @@
 numpydoc
 sphinxcontrib-autoprogram
 sphinx_design
+nbsphinx

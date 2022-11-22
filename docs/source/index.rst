@@ -25,6 +25,8 @@ It has been developed within the framework of **Waves to Weather** [1]_.
             :alt: Alternative text
             :align: center
 
+        +++
+
         .. button-ref:: quick-start/index
             :expand:
             :color: secondary
@@ -35,10 +37,29 @@ It has been developed within the framework of **Waves to Weather** [1]_.
     .. grid-item-card::
         :columns: 5
 
+        .. image:: ./images/icons/examples.svg
+            :width: 50%
+            :alt: Alternative text
+            :align: center
+
+        +++
+
+        .. button-ref:: examples/index
+            :expand:
+            :color: secondary
+            :click-parent:
+
+            Examples
+
+    .. grid-item-card::
+        :columns: 5
+
         .. image:: ./images/icons/user_guide.svg
             :width: 50%
             :alt: Alternative text
             :align: center
+
+        +++
 
         .. button-ref:: user-guide/index
             :expand:
@@ -55,6 +76,8 @@ It has been developed within the framework of **Waves to Weather** [1]_.
             :alt: Alternative text
             :align: center
 
+        +++
+
         .. button-ref:: api
             :expand:
             :color: secondary
@@ -68,6 +91,8 @@ It has been developed within the framework of **Waves to Weather** [1]_.
             :width: 50%
             :alt: Alternative text
             :align: center
+
+        +++
 
         .. button-ref:: CLI
             :expand:
@@ -84,6 +109,8 @@ It has been developed within the framework of **Waves to Weather** [1]_.
             :alt: Alternative text
             :align: center
 
+        +++
+
         .. button-ref:: contribute
             :expand:
             :color: secondary
@@ -99,6 +126,7 @@ It has been developed within the framework of **Waves to Weather** [1]_.
     :hidden:
 
     quick-start/index.rst
+    examples/index.rst
     user-guide/index.rst
     api.rst
     CLI.rst
