@@ -28,7 +28,6 @@ extensions = [
     'sphinx_design',
     'numpydoc',
     'sphinx_copybutton',
-    'nbsphinx',
 ]
 
 # Flag to allow errors in the nbsphinx thingy
