@@ -3,4 +3,5 @@ sphinxcontrib-autoprogram
 sphinx_design
 sphinx_rtd_theme
 sphinx-copybutton
-# nbsphinx
+jupyter-client==6.1.12
+nbsphinx
