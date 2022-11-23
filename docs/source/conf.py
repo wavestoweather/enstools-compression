@@ -27,7 +27,8 @@ extensions = [
     'sphinxcontrib.autoprogram',
     'sphinx_design',
     'numpydoc',
-    'nbsphinx',
+    'sphinx_copybutton',
+    # 'nbsphinx',
 ]
 
 # Flag to allow errors in the nbsphinx thingy

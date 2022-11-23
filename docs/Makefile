@@ -14,11 +14,12 @@ help:
 
 .PHONY: help Makefile
 
-examples:
-	cp -r ../examples/notebooks/*.ipynb source/examples/
+# Copy notebooks for the examples
+# examples:
+# 	cp -r ../examples/notebooks/*.ipynb source/examples/
 
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
-%: Makefile examples
+%: Makefile
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
