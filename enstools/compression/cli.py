@@ -1,26 +1,30 @@
 """
-Single access for different enstools-compressor utilities
+Command Line Interface for different enstools-compression utilities
 """
 
 # Few help messages
 compressor_help_text = """
+compress: 
+
+Tool to apply HDF5 compression filters to netCDF files. Compression specifications must follow the Compression Specification Format, more details below.
+
 Examples
 --------
 
 -Single file:
-    >>> enstools-compressions "input.nc" -o "output/folder/" 
+    >>> enstools-compression compress "input.nc" -o "output/folder/" 
     or
-    >>> enstools-compressions "input.nc" -o "output_file.nc"
+    >>> enstools-compression compress "input.nc" -o "output_file.nc"
 
 -Multiple files:
-    >>> enstools-compressions "input_1.nc" "input_2.nc" -o "output/folder/"
+    >>> enstools-compression compress "input_1.nc" "input_2.nc" -o "output/folder/"
 
 -Path pattern:
-    >>> enstools-compressions "input_files_*" -o "output/folder/"  
+    >>> enstools-compression compress "input_files_*" -o "output/folder/"  
 
 
 To use custom compression parameters:
-    >>> enstools-compressions "input_files_*" -o "output/folder/" --compression compression_specification
+    >>> enstools-compression compress "input_files_*" -o "output/folder/" --compression compression_specification
 
 Where compression_specification can be a string that follows the Compression Specification Format (see more details in enstools-encoding.readthedocs.com) or a filepath
 to a configuration file in which we might have per variable specification.
@@ -64,26 +68,26 @@ It is also possible to define a default option. For example:
 
 So, few examples with custom compression would be:
 
-    >>> enstools-compressions "input_files_*" -o "output/folder/" --compression lossless
+    >>> enstools-compression compress "input_files_*" -o "output/folder/" --compression lossless
 
-    >>> enstools-compressions "input_files_*" -o "output/folder/" --compression lossless,blosclz,9
+    >>> enstools-compression compress "input_files_*" -o "output/folder/" --compression lossless,blosclz,9
 
-    >>> enstools-compressions "input_files_*" -o "output/folder/" --compression lossy,zfp,rate,3.2
+    >>> enstools-compression compress "input_files_*" -o "output/folder/" --compression lossy,zfp,rate,3.2
     
-    >>> enstools-compressions "input_files_*" -o "output/folder/" --compression lossy,sz,abs,0.01
+    >>> enstools-compression compress "input_files_*" -o "output/folder/" --compression lossy,sz,abs,0.01
 
-    >>> enstools-compressions "input_files_*" -o "output/folder/" --compression compression_parameters.yaml
+    >>> enstools-compression compress "input_files_*" -o "output/folder/" --compression compression_parameters.yaml
 
 Also, it is possible to automatically find which are the compression parameters that must be applied
 to each variable in order to maintain a 0.99999 Pearson correlation and a 0.99 structural similarity.
 Be aware that that will cause an overhead due to the necessary time to find the appropriate parameters. 
 
-    >>> enstools-compressions "input_files_*" -o "output/folder/" --compression auto
+    >>> enstools-compression compress "input_files_*" -o "output/folder/" --compression auto
 
 It is possible to parallelize the compression of multiple files by launch a SLURM job for workers.
 To do that, specify the number of nodes to use:
 
-    >>> enstools-compressions -o "output/folder/" "input_files_*" --nodes 4
+    >>> enstools-compression compress -o "output/folder/" "input_files_*" --nodes 4
 
 """
 
@@ -159,10 +163,14 @@ def call_compressor(args):
 ###############################
 # Analyzer
 
+analyzer_help_text = """
+Analyzer 
+"""
+
 def add_subparser_analyzer(subparsers):
     import argparse
 
-    subparser = subparsers.add_parser('analyze', help='Analyze help',
+    subparser = subparsers.add_parser('analyze', help=analyzer_help_text,
                                       formatter_class=argparse.RawDescriptionHelpFormatter)
 
     subparser.add_argument("--constrains", dest="constrains",
@@ -245,10 +253,14 @@ def call_analyzer(args):
 ###############################
 # Find significand bits
 
+significant_bits_help_text = """
+Analyze significand bits
+"""
+
 def add_subparser_significand(subparsers):
     import argparse
 
-    subparser = subparsers.add_parser('significand', help='Analyze significand bits',
+    subparser = subparsers.add_parser('significand', help=significant_bits_help_text,
                                       formatter_class=argparse.RawDescriptionHelpFormatter)
     subparser.add_argument("--output", "-o", dest="output", default=None, type=str,
                            help="Path to the file where the configuration will be saved."
@@ -270,10 +282,13 @@ def call_significand(args):
 
 ###############################
 # Evaluator
+evaluate_help_text = """
+Evaluate help
+"""
 
 def add_subsubparser(subparsers):
     import argparse
-    subparser = subparsers.add_parser('evaluate', help='Evaluate help',
+    subparser = subparsers.add_parser('evaluate', help=evaluate_help_text,
                                       formatter_class=argparse.RawDescriptionHelpFormatter)
     subparser.add_argument("--reference", "-r", dest="reference_file", default=None, type=str,
                            help="Path to reference file. Default=%(default)s", required=True)
@@ -295,10 +310,13 @@ def call_evaluator(args):
 
 ###############################
 # Pruner
+pruner_help_text = """
+Pruner Help Text
+"""
 
 def add_subparser_pruner(subparsers):
     import argparse
-    subparser = subparsers.add_parser('prune', help='Evaluate help',
+    subparser = subparsers.add_parser('prune', help=pruner_help_text,
                                       formatter_class=argparse.RawDescriptionHelpFormatter)
     subparser.add_argument("files", type=str, nargs="+",
                            help='List of files to compress. Multiple files and regex patterns are allowed.')

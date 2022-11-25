@@ -6,9 +6,28 @@ import xarray
 @xarray.register_dataarray_accessor("compression")
 class EnstoolsCompressionDataArrayAccessor:
     def __init__(self, xarray_obj: xarray.DataArray):
+        """
+        Initialize the accessor saving a reference of the data array.
+
+        Parameters
+        ----------
+        xarray_obj: xarray.DataArray
+        """
         self._obj = xarray_obj
 
     def emulate(self, compression: str, in_place=False) -> xarray.DataArray:
+        """
+        Emulate compression on a data array.
+
+        Parameters
+        ----------
+        compression: str
+        in_place: bool
+
+        Returns
+        -------
+        xarray.DataArray
+        """
         compression_specification = FilterEncodingForH5py.from_string(compression)
         data_array, metrics = emulate_compression_on_data_array(data_array=self._obj,
                                                                 compression_specification=compression_specification,
@@ -20,6 +39,7 @@ class EnstoolsCompressionDataArrayAccessor:
     def __call__(self, compression: str, in_place=False) -> xarray.DataArray:
         """
         Calling the accessor directly uses emulate method.
+
         Parameters
         ----------
         compression: str
@@ -47,7 +67,8 @@ class EnstoolsCompressionDataArrayAccessor:
 class EnstoolsCompressionDatasetAccessor:
     def __init__(self, xarray_obj: xarray.Dataset):
         """
-        Save a reference of the dataset
+        Initialize the accessor saving a reference of the dataset.
+
         Parameters
         ----------
         xarray_obj: xarray.Dataset
@@ -56,15 +77,16 @@ class EnstoolsCompressionDatasetAccessor:
 
     def emulate(self, compression: str, in_place=False) -> xarray.Dataset:
         """
-        Emulate compression on a dataset
+        Emulate compression on a dataset.
+
         Parameters
         ----------
-        compression
-        in_place
+        compression: str
+        in_place: bool
 
         Returns
         -------
-
+        xarray.Dataset
         """
         # compression_specification = FilterEncodingForH5py.from_string(compression)
         dataset, metrics = emulate_compression_on_dataset(compression=compression, dataset=self._obj, in_place=in_place)
@@ -84,6 +106,7 @@ class EnstoolsCompressionDatasetAccessor:
     def __call__(self, compression: str, in_place=False) -> xarray.Dataset:
         """
         Calling the accessor directly uses emulate method.
+
         Parameters
         ----------
         compression: str

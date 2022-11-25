@@ -13,7 +13,7 @@ Using enstools's **read** and **write** compressing a file could be done by:
     from enstools.io import read,write
 
     with read("input.nc") as dataset:
-        write(dataset,"output.nc", compression=lossless)
+        write(dataset,"output.nc", compression="lossless")
 
 We added a method that does just thad adding few more features: :meth:`enstools.compression.api.compress`
 

@@ -42,7 +42,7 @@ For development
 A convenient way to install enstools for development is to make a local copy of the repository and install it as an
 editable package:
 
-    >>> git clone https://github.com/wavestoweather/enstools
-    >>> pip install -e enstools/
+    >>> git clone https://github.com/wavestoweather/enstools-compression
+    >>> pip install -e enstools-compression/
 
 

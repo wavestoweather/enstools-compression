@@ -4,10 +4,10 @@ User Guide
 ==========
 
 
-.. grid:: 1
+.. grid:: 2
 
     .. grid-item-card::
-        :columns: 7
+        :columns: 5
 
         .. image:: ../images/icons/api.svg
             :width: 50%
@@ -22,7 +22,7 @@ User Guide
             Using the **Python API**
 
     .. grid-item-card::
-        :columns: 7
+        :columns: 5
 
         .. image:: ../images/icons/cli.svg
             :width: 50%
