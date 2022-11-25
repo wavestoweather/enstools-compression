@@ -1,48 +1,6 @@
-.. _UsingAPI:
+.. _ExamplesAPI:
 
-Using the Python API
+Python API examples
 --------------------
 
-Writing compressed files
-........................
-
-Using enstools's **read** and **write** compressing a file could be done by:
-
-.. code::
-
-    from enstools.io import read,write
-
-    with read("input.nc") as dataset:
-        write(dataset,"output.nc", compression=lossless)
-
-We added a method that does just thad adding few more features: :meth:`enstools.compression.api.compress`
-
-
-
-
-Finding compression parameters
-..............................
-
-
-:meth:`enstools.compression.api.analyze_files`
-:meth:`enstools.compression.api.analyze_dataset`
-
-To analyze a dataset:
-.. code::
-
-    from enstools.io import read
-    from enstools.encoding.api import analyze_dataset
-
-    with read("input.nc") as dataset:
-        results = analyze_dataset(dataset)
-
-To analyze a file:
-
-.. code::
-
-    from enstools.encoding.api import analyze_files
-
-    results = analyze_files("input.nc")
-
-
-
+Few examples are available in our `github repository <https://github.com/wavestoweather/enstools-compression/tree/main/examples>`_.
