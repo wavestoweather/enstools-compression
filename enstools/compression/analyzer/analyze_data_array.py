@@ -1,6 +1,6 @@
 import copy
 import logging
-from typing import Tuple, Type, Callable
+from typing import Tuple, Type, Callable, Union
 import warnings
 
 import numpy as np
@@ -12,7 +12,7 @@ from enstools.encoding.api import compression_mode_aliases, compressor_aliases, 
 from enstools.encoding.rules import COMPRESSION_SPECIFICATION_SEPARATOR
 from enstools.compression.emulators.EmulatorClass import Emulator
 from .AnalysisOptions import AnalysisOptions
-from enstools.compression.emulators import LibpressioEmulator, ZFPEmulator, FilterEmulator
+from enstools.compression.emulators import LibpressioEmulator, ZFPEmulator, FilterEmulator, default_emulator
 from .analyzer_utils import get_metrics, get_parameter_range, bisection_method
 
 # These metrics will be used to select within the different encodings when aiming at a certain compression ratio.
@@ -21,24 +21,17 @@ COMPRESSION_RATIO_LABEL = "compression_ratio"
 counter = 0
 
 
-def get_compressor_factory(name="libpressio") -> Type[Emulator]:
+def get_compressor_factory() -> Type[Emulator]:
     """
     This function returns a Compressor object which is able to compress and decompress data.
     The selection here is made based on the availability of LibPressio.
     """
-    if name == "filters":
-        return FilterEmulator
-    elif name == "zfpy":
-        return ZFPEmulator
-    elif name == "libpressio":
-        if check_libpressio_availability():
-            return LibpressioEmulator
-        else:
-            logging.warning("libpressio is not available, using FilterEmulator instead")
-            return FilterEmulator
-    else:
-        raise NotImplementedError(f"Options are 'filters', 'zfpy' and 'libpressio'")
 
+    if default_emulator is LibpressioEmulator and not  check_libpressio_availability():
+        logging.warning("libpressio is not available, using FilterEmulator instead")
+        return FilterEmulator
+
+    return default_emulator
 
 
 def analyze_data_array(data_array: xarray.DataArray, options: AnalysisOptions) -> Tuple[str, dict]:
