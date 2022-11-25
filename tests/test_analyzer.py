@@ -41,7 +41,7 @@ class TestAnalyzer(TestClass):
         constrains = "compression_ratio:5"
         thresholds = from_csv_to_dict(constrains)
         # Check that the compression without specifying compression parameters works
-        datasets = ["dataset_%iD.nc" % dimension for dimension in range(2, 4)]
+        datasets = ["dataset_%iD.nc" % dimension for dimension in range(3, 4)]
         for ds in datasets:
             input_path = input_tempdir / ds
             encodings, metrics = analyze_files(file_paths=[input_path], constrains=constrains)
@@ -50,7 +50,7 @@ class TestAnalyzer(TestClass):
 
             for var in metrics:
                 if abs(metrics[var][cr_label] - thresholds[cr_label]) > TOLERANCE:
-                    raise AssertionError(f"The resulting compression ratio of {metrics[var][cr_label]:.2f}"
+                    raise AssertionError(f"Case:{input_path.name}.The resulting compression ratio of {metrics[var][cr_label]:.2f}"
                                          f"x is not close enough to the target of {thresholds[cr_label]:.2f}")
 
     @pytest.mark.skipif(not check_libpressio_availability(), reason="Requires libpressio")
