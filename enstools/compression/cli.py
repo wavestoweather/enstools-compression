@@ -19,14 +19,17 @@ Examples
 -Multiple files:
     >>> enstools-compression compress "input_1.nc" "input_2.nc" -o "output/folder/"
 
--Path pattern:
+-Multiple files using wildcards:
     >>> enstools-compression compress "input_files_*" -o "output/folder/"  
 
 
 To use custom compression parameters:
     >>> enstools-compression compress "input_files_*" -o "output/folder/" --compression compression_specification
 
-Where compression_specification can be a string that follows the Compression Specification Format (see more details in enstools-encoding.readthedocs.com) or a filepath
+Compression Specification Format
+--------------------------------
+
+The compression_specification can be a string that follows the Compression Specification Format (see more details in enstools-encoding.readthedocs.com) or a filepath
 to a configuration file in which we might have per variable specification.
 
 For lossless compression, we can choose the backend and the compression leven as follows
@@ -164,7 +167,41 @@ def call_compressor(args):
 # Analyzer
 
 analyzer_help_text = """
-Analyzer 
+analyze: 
+
+Tool to find which compression specifications maximise the compression ratio while maintaining certain quality metrics provided by the argument **constrains**.
+
+Examples
+--------
+
+Analyze file using default constrains:
+
+>>> enstools-compression analyze "input_file.nc"
+
+
+Analyze file using custom constrains:
+
+>>> enstools-compression analyze "input_file.nc" --constrains "correlation_I:7,ssim_I:4"
+
+Analyze file and save the results to a file:
+
+>>> enstools-compression analyze "input_file.nc" -o "compression_specifications.yaml"
+
+Analyze files using a custom metric:
+
+>>> enstools-compression analyze "input_file.nc" --constrains "my_metric:5" --plugin my_metric.py
+
+where **my_metric.py** contains a function with the same name which expects two xarray as arguments (reference and target) 
+and returns an xarray with the time-series of the desired metric.
+
+
+Constrains
+----------
+
+The constrain specification must be provided in the following format:
+    >>> "metric1:value1,metric2:value2,metric3:value3"
+
+
 """
 
 def add_subparser_analyzer(subparsers):
@@ -254,7 +291,13 @@ def call_analyzer(args):
 # Find significand bits
 
 significant_bits_help_text = """
-Analyze significand bits
+significand:
+
+Tool to find the ammount of significand bits in a data file following the approach described in Klöwer et al 2021 _[1].
+
+.. [1] Klöwer, M., Razinger, M., Dominguez, J.J. et al. Compressing atmospheric data into its real information content.
+Nat Comput Sci 1, 713-724 (2021). https://doi.org/10.1038/s43588-021-00156-2
+
 """
 
 def add_subparser_significand(subparsers):
@@ -283,7 +326,10 @@ def call_significand(args):
 ###############################
 # Evaluator
 evaluate_help_text = """
-Evaluate help
+evaluate:
+
+Tool to quickly compare two datasets, mainly though to compare a compressed dataset with its reference.
+
 """
 
 def add_subsubparser(subparsers):
@@ -311,7 +357,10 @@ def call_evaluator(args):
 ###############################
 # Pruner
 pruner_help_text = """
-Pruner Help Text
+pruner:
+
+Tool to prune a file up to a certain number of significant bits.
+
 """
 
 def add_subparser_pruner(subparsers):
