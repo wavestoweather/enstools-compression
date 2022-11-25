@@ -21,17 +21,17 @@ class LibpressioEmulator(Emulator):
             compressor_name, mode, parameter, uncompressed_data)
         self.compressor = PressioCompressor.from_config(self._config)
 
-    def compress(self, uncompressed_data: np.array) -> np.array:
+    def compress(self, uncompressed_data: np.ndarray) -> np.ndarray:
         self._shape = uncompressed_data.shape
         self._dtype = uncompressed_data.dtype
         return self.compressor.encode(uncompressed_data)
 
-    def decompress(self, compressed_data: np.array) -> np.array:
+    def decompress(self, compressed_data: np.ndarray) -> np.ndarray:
         decompressed = np.zeros(shape=self._shape, dtype=self._dtype)
         decompressed = self.compressor.decode(compressed_data, decompressed)
         return decompressed
 
-    def compress_and_decompress(self, uncompressed_data: np.array) -> np.array:
+    def compress_and_decompress(self, uncompressed_data: np.ndarray) -> np.ndarray:
         compressed_data = self.compress(uncompressed_data=uncompressed_data)
         return self.decompress(compressed_data=compressed_data)
 

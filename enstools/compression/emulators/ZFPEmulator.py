@@ -1,5 +1,5 @@
 """
-Definition of the class LibpressioEmulator: an Emulator that uses ZFP.
+Definition of the class ZFPEmulator: an Emulator that uses ZFP.
 Can only work with the ZFP compressor.
 """
 
@@ -21,7 +21,7 @@ class ZFPEmulator(Emulator):
         self.parameters = {mode_str: parameter}
         self._compression_ratio = None
 
-    def compress(self, uncompressed_data: np.array) -> np.array:
+    def compress(self, uncompressed_data: np.ndarray) -> np.ndarray:
         # Compress the data
         compressed_data = zfpy.compress_numpy(uncompressed_data, **self.parameters)
 
@@ -34,10 +34,10 @@ class ZFPEmulator(Emulator):
         # Return compressed data
         return compressed_data
 
-    def decompress(self, compressed_data: np.array) -> np.array:
+    def decompress(self, compressed_data: np.ndarray) -> np.ndarray:
         return zfpy.decompress_numpy(compressed_data)
 
-    def compress_and_decompress(self, uncompressed_data: np.array) -> np.array:
+    def compress_and_decompress(self, uncompressed_data: np.ndarray) -> np.ndarray:
         compressed_data = self.compress(uncompressed_data=uncompressed_data)
         return self.decompress(compressed_data=compressed_data)
 

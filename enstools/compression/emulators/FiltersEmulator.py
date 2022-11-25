@@ -38,13 +38,14 @@ class FilterEmulator(Emulator):
 
         self._compression_ratio = None
 
-    def compress(self, uncompressed_data: np.array) -> np.array:
+    def compress(self, uncompressed_data: np.ndarray) -> np.ndarray:
         raise NotImplementedError
 
-    def decompress(self, compressed_data: np.array) -> np.array:
+    def decompress(self, compressed_data: np.ndarray) -> np.ndarray:
         raise NotImplementedError
 
-    def compress_and_decompress(self, uncompressed_data: np.array) -> np.array:
+    def compress_and_decompress(self, uncompressed_data: np.ndarray) -> np.ndarray:
+        # Create a temporary directory in the system memory
         with TempDir(parentdir="/dev/shm", check_free_space=False) as tempdir:
             tmp_dir_path = Path(tempdir.getpath())
             tmp_file_path = tmp_dir_path / "temp_file.nc"
