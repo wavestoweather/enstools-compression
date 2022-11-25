@@ -156,7 +156,7 @@ def find_encodings_for_all_combinations(dataset: xarray.Dataset, options: Analys
     return encodings, metrics
 
 
-def analyze_files(file_paths: List[Path],
+def analyze_files(file_paths: Union[Path, List[Path]],
                   output_file: Path = None,
                   constrains: str = "correlation_I:5,ssim_I:2",
                   file_format: str = "yaml",
