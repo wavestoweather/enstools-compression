@@ -3,21 +3,43 @@
 Examples
 ========
 
-Gallery of examples:
+
+.. grid:: 2
+
+    .. grid-item-card::
+        :columns: 5
+
+        .. image:: ../images/icons/api.svg
+            :width: 50%
+            :alt: Alternative text
+            :align: center
+
+        .. button-ref:: examples_api
+            :expand:
+            :color: secondary
+            :click-parent:
+
+            **Python API** examples
+
+    .. grid-item-card::
+        :columns: 5
+
+        .. image:: ../images/icons/cli.svg
+            :width: 50%
+            :alt: Alternative text
+            :align: center
+
+
+        .. button-ref:: examples_cli
+            :expand:
+            :color: secondary
+            :click-parent:
+
+            **Command Line Interface** examples
 
 .. toctree::
-    :maxdepth: 1
-    :caption: Using the Python API
+    :maxdepth: 2
+    :hidden:
 
-    ./compress_dataset.ipynb
-    ./analyze_dataset.ipynb
-    ./analyze_file.ipynb
-    ./analyze_and_compress_dataset.ipynb
-    ./compress_dataset_without_enstools_write.ipynb
-
-
-.. toctree::
-    :maxdepth: 1
-    :caption: Using the Command Line Interface
-
-    ./compress_file.ipynb
+    examples_api.rst
+    examples_cli.rst
