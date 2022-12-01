@@ -28,10 +28,10 @@ Compress an existing file
 Using the **Command Line Interface** it is very easy to compress existing files as well:
 
 An example with lossless compression:
-    >>> enstools-compression "input.nc" -o "output.nc" --compression "lossless"
+    >>> enstools-compression compress "input.nc" -o "output.nc" --compression "lossless"
 
 An example with lossy compression:
-    >>> enstools-compression "input.nc" -o "output.nc" --compression "lossy,sz,rel,1e-5"
+    >>> enstools-compression compress "input.nc" -o "output.nc" --compression "lossy,sz,rel,1e-5"
 
 
 Analyze a dataset to find compression specifications
@@ -52,6 +52,19 @@ This stands for 5 9s of correlation (0.99999) and 2 9s of structural similarity 
 
     specifications, metrics = analyze_dataset(dataset, constrains="correlation:0.99999,ssim:0.99")
 
+Analyze a file to find compression specifications using the command line interface
+-------------------------------------
+
+The same function **enstools.compression.analyze_dataset** can be used from the **Command Line Interface**.
+
+    >>> enstools-compression analyze "input.nc"
+
+By default the constrains used are
+    >>> constrains="correlation_I:5,ssim_I:2"
+
+This stands for 5 9s of correlation (0.99999) and 2 9s of structural similarity (0.99).
+
+    >>> enstools-compression analyze "input.nc" --constrains "correlation_I:5,ssim_I:2"
 
 
 More examples:
