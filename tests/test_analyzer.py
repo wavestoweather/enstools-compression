@@ -53,7 +53,6 @@ class TestAnalyzer(TestClass):
                     raise AssertionError(f"Case:{input_path.name}.The resulting compression ratio of {metrics[var][cr_label]:.2f}"
                                          f"x is not close enough to the target of {thresholds[cr_label]:.2f}")
 
-    @pytest.mark.skipif(not check_libpressio_availability(), reason="Requires libpressio")
     def test_sz_analyzer(self):
         from enstools.compression.api import analyze_files
         input_tempdir = self.input_directory_path

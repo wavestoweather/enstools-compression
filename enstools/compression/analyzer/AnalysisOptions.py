@@ -68,16 +68,10 @@ class AnalysisParameters:
     @property
     def compressors(self):
         # Check library availability and select proper analysis_function
-        if check_libpressio_availability():
-            if self.options.compressor is Compressors.NONE or self.options.compressor is Compressors.ALL:
-                return [Compressors.ZFP, Compressors.SZ]
-            else:
-                return [self.options.compressor]
+        if self.options.compressor is Compressors.NONE or self.options.compressor is Compressors.ALL:
+            return [Compressors.ZFP, Compressors.SZ]
         else:
-            if self.options.compressor is not Compressors.NONE:
-                assert self.options.compressor == Compressors.ZFP, "The only available option without libpressio is 'zfp'."
-
-            return [Compressors.ZFP]
+            return [self.options.compressor]
 
     def get_compressor_mode_combinations(self):
         """

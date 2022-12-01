@@ -76,7 +76,6 @@ class TestCompressor(TestClass):
             final_size = file_size(output_file_path)
             assert initial_size > final_size
 
-    @pytest.mark.skipif(not check_sz_availability(), reason="Requires SZ")
     def test_filters_availability(self):
         from enstools.encoding.api import check_filters_availability
         assert check_filters_availability()

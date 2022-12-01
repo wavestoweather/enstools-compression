@@ -42,7 +42,7 @@ setup(name="enstools-compression",
           "enstools>=2022.11.1",
           "enstools-encoding>=2022.11.1",
           "zfpy",
-          "hdf5plugin",
+          "hdf5plugin>=4.0.0",
       ],
       entry_points={
           'console_scripts': [

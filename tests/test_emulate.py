@@ -52,7 +52,6 @@ class TestEmulators:
         recovered_data = analysis_compressor.compress_and_decompress(data)
         print(f"Compression Ratio:{analysis_compressor.compression_ratio():.2f}")
 
-    @pytest.mark.skipif(not check_sz_availability(), reason="Requires SZ filter.")
     def test_FilterAnalysisCompressor_with_SZ(self):
         from enstools.compression.emulators import FilterEmulator
         settings = {
@@ -83,7 +82,6 @@ class TestEmulate(TestClass):
             for compression_specification in compression_specifications:
                 ds, _ = emulate_compression_on_dataset(ds, compression=compression_specification)
 
-    @pytest.mark.skipif(not check_sz_availability(), reason="Requires SZ filter.")
     def test_emulation_with_sz(self):
         from enstools.io import read
         from enstools.compression.emulation import emulate_compression_on_dataset

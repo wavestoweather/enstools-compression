@@ -91,8 +91,6 @@ class TestCommandLineInterface(TestClass):
         mocker.patch("sys.argv", commands)
         enstools.compression.cli.main()
 
-    @pytest.mark.skipif(not check_sz_availability() and not check_libpressio_availability(),
-                        reason="Requires SZ and libpressio")
     def test_analyze_with_sz_and_plugin(self, mocker):
         """
         Test enstools-compressor analyze using a custom plugin.
