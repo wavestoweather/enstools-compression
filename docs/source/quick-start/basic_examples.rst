@@ -44,6 +44,7 @@ To find compression specifications, an automatic search function **enstools.comp
     specifications, metrics = analyze_dataset(dataset)
 
 By default the constrains used are
+
     >>> constrains="correlation_I:5,ssim_I:2"
 
 This stands for 5 9s of correlation (0.99999) and 2 9s of structural similarity (0.99).
@@ -60,6 +61,7 @@ The same function **enstools.compression.analyze_dataset** can be used from the 
     >>> enstools-compression analyze "input.nc"
 
 By default the constrains used are
+
     >>> constrains="correlation_I:5,ssim_I:2"
 
 This stands for 5 9s of correlation (0.99999) and 2 9s of structural similarity (0.99).
