@@ -1,9 +1,3 @@
-from os.path import isfile, join
-
-import pytest
-
-from enstools.encoding.api import check_sz_availability
-
 from utils import file_size, wrapper, TestClass
 
 folders = None

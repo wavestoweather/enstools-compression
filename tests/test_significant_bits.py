@@ -1,5 +1,3 @@
-from os.path import join
-
 from utils import TestClass
 
 folders = None

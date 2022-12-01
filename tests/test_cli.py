@@ -2,12 +2,10 @@
 Tests for the commandline interface.
 """
 
-from os.path import isfile, join
-from enstools.encoding.compressors.availability_checks import check_sz_availability, check_libpressio_availability
+from os.path import isfile
 
 import pytest
 from utils import TestClass
-from pathlib import Path
 
 
 class TestCommandLineInterface(TestClass):

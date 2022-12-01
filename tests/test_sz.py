@@ -1,9 +1,3 @@
-from os.path import join
-
-import pytest
-
-from enstools.encoding.api import check_sz_availability, check_libpressio_availability
-
 from utils import wrapper, TestClass
 
 folders = None

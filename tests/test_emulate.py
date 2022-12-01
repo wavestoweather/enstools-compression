@@ -1,9 +1,8 @@
-from enstools.encoding.api import Compressors, CompressionModes, check_sz_availability, check_libpressio_availability
+from enstools.encoding.api import Compressors, CompressionModes, check_libpressio_availability
 from utils import TestClass
 import numpy as np
 
 import pytest
-
 
 
 class TestEmulators:
