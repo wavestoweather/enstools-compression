@@ -21,19 +21,6 @@ COMPRESSION_RATIO_LABEL = "compression_ratio"
 counter = 0
 
 
-def get_compressor_factory() -> Type[Emulator]:
-    """
-    This function returns a Compressor object which is able to compress and decompress data.
-    The selection here is made based on the availability of LibPressio.
-    """
-
-    if default_emulator is LibpressioEmulator and not  check_libpressio_availability():
-        logging.warning("libpressio is not available, using FilterEmulator instead")
-        return FilterEmulator
-
-    return default_emulator
-
-
 def analyze_data_array(data_array: xarray.DataArray, options: AnalysisOptions) -> Tuple[str, dict]:
     """
     Find the compression specification corresponding to a certain data array and a given set of compression options.
@@ -105,8 +92,6 @@ def define_functions_to_optimize(data_array: xarray.DataArray, options: Analysis
     global counter
     counter = 0
 
-    compressor_factory = get_compressor_factory()
-
     # Using a cache allows us to avoid recomputing when using the same parameters.
     # @functools.lru_cache
     def get_metrics_from_parameter(parameter: float) -> dict:
@@ -117,15 +102,12 @@ def define_functions_to_optimize(data_array: xarray.DataArray, options: Analysis
         global counter
         counter += 1
 
-        if compressor_factory == ZFPEmulator and options.compressor != Compressors.ZFP:
-            raise EnstoolsError(f"Trying to use ZFP analysis compressor for compressor {options.compressor}")
-
         target = data_array.copy(deep=True)
 
         # Set buffers
         uncompressed_data = data_array.values
         # Create compressor for case
-        analysis_compressor = compressor_factory(options.compressor, options.mode, parameter, uncompressed_data)
+        analysis_compressor = default_emulator(options.compressor, options.mode, parameter, uncompressed_data)
         # Compress and decompress data
         decompressed = analysis_compressor.compress_and_decompress(uncompressed_data)
         # Assign values to target data_array (need to use enstools metrics)
