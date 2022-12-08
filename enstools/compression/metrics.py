@@ -135,7 +135,7 @@ class DataArrayMetrics:
         cmaplist = [cmap(i) for i in range(cmap.N)]
         # Generate new colormap with only few levels
         cmap = mpl.colors.LinearSegmentedColormap.from_list('Custom cmap', cmaplist, color_levels)
-        difference = self.difference[sl]
+        difference = self.target[sl]-self.reference[sl]
         _min = np.min(difference)
         _max = np.max(difference)
         __ = max(abs(_min), _max)

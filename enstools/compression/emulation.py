@@ -50,13 +50,18 @@ def emulate_compression_on_data_array(data_array: xarray.DataArray, compression_
     if not in_place:
         data_array = data_array.copy()
     # For now we want to apply compression chunk by chunk ( or at least for the moment avoid using multiple time-steps)
-    if "time" not in data_array.dims:
-        data_array.values, compression_metrics = emulate_compression_on_numpy_array(data_array.values,
-                                                                                    compression_specification)
-    else:
-        for time in data_array["time"]:
-            data_array.loc[{"time": time}], compression_metrics = emulate_compression_on_numpy_array(
-                data_array.sel(time=time).values, compression_specification)
+    # if "time" not in data_array.dims:
+    #     data_array.values, compression_metrics = emulate_compression_on_numpy_array(data_array.values,
+    #                                                                                 compression_specification)
+    # else:
+    #     for time in data_array["time"]:
+    #         data_array.loc[{"time": time}], compression_metrics = emulate_compression_on_numpy_array(
+    #             data_array.sel(time=time).values, compression_specification)
+
+    # FIXME: I don't separate the time-steps at that point anymore because of performance penalty.
+    data_array.values, compression_metrics = emulate_compression_on_numpy_array(data_array.values,
+                                                                                compression_specification)
+
     return data_array, compression_metrics
 
 

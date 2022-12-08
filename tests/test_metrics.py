@@ -1,8 +1,12 @@
 from os.path import isfile, join
 
 # List with all the available metrics
+from pathlib import Path
+from typing import List
+
 import xarray
 from enstools.compression.metrics import get_matching_scores
+from utils import TestClass
 
 available_metrics = get_matching_scores(arguments=["reference", "target"])
 
@@ -22,95 +26,29 @@ excluded_metrics = [
 ]
 
 
-def create_synthetic_dataset(directory):
-    """
-    Creates three synthetic netcdf datasets (1d,2d,3d) into the provided directory.
-    :param directory:
-    :return: None
-    """
-    import numpy as np
-    import xarray as xr
-    import pandas as pd
-    from scipy.ndimage import gaussian_filter
-    # Create synthetic datasets
-    nx, ny, nz, m, t = 30, 30, 5, 5, 5
-    lon = np.linspace(-180, 180, nx)
-    lat = np.linspace(-90, 90, ny)
-    levels = np.array(range(nz))
-    for dimension in [1, 2, 3, 4]:
-        if dimension == 1:
-            data_size = (t, nx)
-            var_dimensions = ["time", "lon"]
-        elif dimension == 2:
-            data_size = (t, nx, ny)
-            var_dimensions = ["time", "lon", "lat"]
-        elif dimension == 3:
-            data_size = (t, nz, nx, ny)
-            var_dimensions = ["time", "level", "lon", "lat"]
-        elif dimension == 4:
-            data_size = (t, m, nz, nx, ny)
-            var_dimensions = ["time", "ens", "level", "lon", "lat"]
-        else:
-            raise NotImplementedError()
+def wrapper_to_test_metrics(input_folder: Path, dimensions: List[int], test_metrics: List[str]):
+    from enstools.compression.metrics import DatasetMetrics
+    from enstools.io import read
+    file_names = ("dataset_%iD.nc" % dimension for dimension in dimensions)
+    file_paths = (input_folder / file_name for file_name in file_names)
 
-        temp = 15 + 8 * np.random.randn(*data_size)
-        temp = gaussian_filter(temp, sigma=5)
-        precip = 10 * np.random.rand(*data_size)
-        precip = gaussian_filter(precip, sigma=5)
-
-        ds = xr.Dataset(
-            {
-                "temperature": (var_dimensions, temp),
-                "precipitation": (var_dimensions, precip),
-            },
-
-            coords={
-                "lon": lon,
-                "lat": lat,
-                "level": levels,
-                "time": pd.date_range("2014-09-06", periods=t),
-                "reference_time": pd.Timestamp("2014-09-05"),
-            },
-        )
-        ds_name = "dataset_%iD.nc" % dimension
-        ds.to_netcdf(join(directory, ds_name))
+    for file_path in file_paths:
+        with read(file_path) as ds:
+            ds_metrics = DatasetMetrics(ds, ds)
+            for variable in ds_metrics.variables:
+                var_metrics = ds_metrics[variable]
+                for metric in test_metrics:
+                    m = var_metrics[metric]
+                    assert isinstance(m, float) or isinstance(m, xarray.DataArray)
 
 
-class TestClass:
-    @classmethod
-    def setup_class(cls):
-        """
-        This code will be executed at the beginning of the tests.
-        We will be launching the
-        :return:
-        """
-        """
-        Creates two temporary directories:
-        - Input directory: Will store the synthetic data created for the test
-        - Output directory: Will store the compressed synthetic data
-        :return: Tempdir, Tempdir
-        """
-        from enstools.core.tempdir import TempDir
-        # Create temporary directory in which we'll put some synthetic datasets
-        cls.input_tempdir = TempDir(check_free_space=False)
-        cls.output_tempdir = TempDir(check_free_space=False)
-        create_synthetic_dataset(cls.input_tempdir.getpath())
-
-    @classmethod
-    def teardown_class(cls):
-        # release resources
-        cls.input_tempdir.cleanup()
-        cls.output_tempdir.cleanup()
-
+class TestMetrics(TestClass):
     def test_dataset_exists(self):
-        input_tempdir = self.input_tempdir
-        output_tempdir = self.output_tempdir
-        tempdir_path = input_tempdir.getpath()
-
         dimensions = [1, 2, 3, 4]
-        datasets = ["dataset_%iD.nc" % dimension for dimension in dimensions]
-        for ds in datasets:
-            assert isfile(join(tempdir_path, ds))
+        file_names = ("dataset_%iD.nc" % dimension for dimension in dimensions)
+        file_paths = (self.input_directory_path / file_name for file_name in file_names)
+        for file_path in file_paths:
+            assert file_path.is_file()
 
     def test_scalar_metrics(self):
         """
@@ -118,21 +56,12 @@ class TestClass:
         """
         # Get the list of the metrics for this test
         test_metrics = [m for m in metrics if m not in ensemble_metrics and m not in excluded_metrics]
-        from enstools.compression.metrics import DatasetMetrics
-        from enstools.io import read
-        input_tempdir = self.input_tempdir
-        # Check that the compression without specifying compression parameters works
         dimensions = [1, 2, 3, 4]
-        files = ["dataset_%iD.nc" % dimension for dimension in dimensions]
-        for file_name in files:
-            input_path = join(input_tempdir.getpath(), file_name)
-            ds = read(input_path)
-            ds_metrics = DatasetMetrics(ds, ds)
-            for variable in ds_metrics.variables:
-                var_metrics = ds_metrics[variable]
-                for metric in test_metrics:
-                    m = var_metrics[metric]
-                    assert isinstance(m, float) or isinstance(m, xarray.DataArray)
+        wrapper_to_test_metrics(
+            input_folder=self.input_directory_path,
+            dimensions=dimensions,
+            test_metrics=test_metrics,
+        )
 
     def test_ensemble_metrics(self):
         """
@@ -140,21 +69,13 @@ class TestClass:
         """
         # Get the list of the metrics for this test
         test_metrics = [m for m in ensemble_metrics if m not in excluded_metrics]
-        from enstools.compression.metrics import DatasetMetrics
-        from enstools.io import read
-        input_tempdir = self.input_tempdir
-        # Check that the compression without specifying compression parameters works
+        # For ensemble metrics we need variables with an ensemble dimension, in this case only the 4D file.
         dimensions = [4]
-        files = ["dataset_%iD.nc" % dimension for dimension in dimensions]
-        for file_name in files:
-            input_path = join(input_tempdir.getpath(), file_name)
-            ds = read(input_path)
-            ds_metrics = DatasetMetrics(ds, ds)
-            for variable in ds_metrics.variables:
-                var_metrics = ds_metrics[variable]
-                for metric in test_metrics:
-                    m = var_metrics[metric]
-                    assert isinstance(m, float) or isinstance(m, xarray.DataArray)
+        wrapper_to_test_metrics(
+            input_folder=self.input_directory_path,
+            dimensions=dimensions,
+            test_metrics=test_metrics,
+        )
 
     def test_ssim(self):
         """
@@ -162,18 +83,15 @@ class TestClass:
         """
         # Get the list of the metrics for this test
         test_metrics = ["ssim_I"]
-        from enstools.compression.metrics import DatasetMetrics
-        from enstools.io import read
-        input_tempdir = self.input_tempdir
-        # Check that the compression without specifying compression parameters works
+        # We can't use SSIM on 1D data
         dimensions = [2, 3, 4]
-        files = ["dataset_%iD.nc" % dimension for dimension in dimensions]
-        for file_name in files:
-            input_path = join(input_tempdir.getpath(), file_name)
-            ds = read(input_path)
-            ds_metrics = DatasetMetrics(ds, ds)
-            for variable in ds_metrics.variables:
-                var_metrics = ds_metrics[variable]
-                for metric in test_metrics:
-                    m = var_metrics[metric]
-                    assert isinstance(m, float) or isinstance(m, xarray.DataArray)
+        wrapper_to_test_metrics(
+            input_folder=self.input_directory_path,
+            dimensions=dimensions,
+            test_metrics=test_metrics,
+        )
+
+    def test_convert_size(self):
+        from enstools.compression.size_metrics import readable_size
+        file_path = self.input_directory_path / "dataset_2D.nc"
+        readable_size(file_path)

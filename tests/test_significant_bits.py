@@ -20,3 +20,15 @@ class TestPrune(TestClass):
             input_path = self.input_directory_path / ds
             # Import and launch compress function
             pruner(input_path, self.output_directory_path)
+
+    def test_prune_multiple_files(self):
+        from enstools.compression.pruner import pruner
+        datasets = ["dataset_%iD.nc" % dimension for dimension in range(2, 4)]
+        data_paths = [self.input_directory_path / ds for ds in datasets]
+        pruner(data_paths, self.output_directory_path)
+
+    def test_prune_multiple_keeping_variables(self):
+        from enstools.compression.pruner import pruner
+        datasets = ["dataset_%iD.nc" % dimension for dimension in range(2, 4)]
+        data_paths = [self.input_directory_path / ds for ds in datasets]
+        pruner(data_paths, self.output_directory_path, variables_to_keep=["temperature"])

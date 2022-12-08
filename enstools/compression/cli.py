@@ -342,6 +342,8 @@ def add_subsubparser(subparsers):
                            help="Path to target file", required=True)
     subparser.add_argument("--plot", dest="plot", default=False, action='store_true',
                            help="Produce evaluation plots. Default=%(default)s")
+    subparser.add_argument("-g", "--gradients", dest="gradients", default=False, action='store_true',
+                           help="Compute gradients. Default=%(default)s")
     subparser.set_defaults(which='evaluator')
 
 
@@ -349,9 +351,10 @@ def call_evaluator(args):
     reference_file_path = args.reference_file
     target_file_path = args.target_file
     plot = args.plot
+    gradients = args.gradients
 
     from enstools.compression.api import evaluate
-    evaluate(reference_file_path, target_file_path, plot=plot)
+    evaluate(reference_file_path, target_file_path, plot=plot, create_gradients=gradients)
 
 
 ###############################

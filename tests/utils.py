@@ -13,11 +13,11 @@ def create_synthetic_dataset(directory: str) -> None:
     from scipy.ndimage import gaussian_filter
     from os.path import join
     # Create synthetic datasets
-    nx, ny, nz, t = 120, 91, 31, 2
+    nx, ny, nz, m, t = 120, 91, 31, 5, 2
     lon = np.linspace(-180, 180, nx)
     lat = np.linspace(-90, 90, ny)
     levels = np.array(range(nz))
-    for dimension in [1, 2, 3]:
+    for dimension in [1, 2, 3, 4]:
         if dimension == 1:
             data_size = (t, nx)
             var_dimensions = ["time", "lon"]
@@ -27,6 +27,9 @@ def create_synthetic_dataset(directory: str) -> None:
         elif dimension == 3:
             data_size = (t, nz, nx, ny)
             var_dimensions = ["time", "level", "lon", "lat"]
+        elif dimension == 4:
+            data_size = (t, m, nz, nx, ny)
+            var_dimensions = ["time", "ens", "level", "lon", "lat"]
         else:
             raise NotImplementedError()
 

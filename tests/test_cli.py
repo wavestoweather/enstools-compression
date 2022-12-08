@@ -139,6 +139,48 @@ class TestCommandLineInterface(TestClass):
         mocker.patch("sys.argv", commands)
         enstools.compression.cli.main()
 
+    def test_evaluator_with_plot(self, mocker):
+        """
+        Test enstools-compressor evaluate
+        """
+        import enstools.compression.cli
+        file_name = "dataset_%iD.nc" % 3
+        file_path = self.input_directory_path / file_name
+        commands = ["_", "evaluate", "-r", str(file_path), "-t", str(file_path), "--plot"]
+        mocker.patch("sys.argv", commands)
+        enstools.compression.cli.main()
+
+    def test_evaluator_with_warnings(self, mocker):
+        """
+        Test enstools-compressor evaluate
+        """
+        import enstools.compression.cli
+        from enstools.compression.compressor import compress
+        file_name = "dataset_%iD.nc" % 3
+        file_path = self.input_directory_path / file_name
+        # Generate a compressed file with a high compression ratio.
+        compressed_path = self.output_directory_path / file_name
+        compress(file_path, output=compressed_path, compression="lossy,zfp,rate,2.0")
+        commands = ["_", "evaluate", "-r", str(file_path), "-t", str(compressed_path)]
+        mocker.patch("sys.argv", commands)
+        enstools.compression.cli.main()
+
+    def test_evaluator_with_gradients(self, mocker):
+        """
+        Test enstools-compressor evaluate
+        """
+        import enstools.compression.cli
+        from enstools.compression.compressor import compress
+        file_name = "dataset_%iD.nc" % 3
+        file_path = self.input_directory_path / file_name
+        # Generate a compressed file with a high compression ratio.
+        compressed_path = self.output_directory_path / file_name
+        compress(file_path, output=compressed_path, compression="lossy,zfp,rate,4.0")
+        commands = ["_", "evaluate", "-r", str(file_path), "-t", str(compressed_path), "--gradients"]
+        mocker.patch("sys.argv", commands)
+        enstools.compression.cli.main()
+
+
     def test_significand(self, mocker):
         """
         Test enstools-compressor significand

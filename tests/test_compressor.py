@@ -82,12 +82,53 @@ class TestCompressor(TestClass):
 
     def test_compress_single_file(self):
         from enstools.compression.api import compress
-        # Check that the compression without specifying compression parameters works
         datasets = ["dataset_%iD.nc" % dimension for dimension in range(1, 4)]
         for ds in datasets:
             input_path = self.input_directory_path / ds
             output_filename = self.output_directory_path / f"{ds.replace('.nc', '_output.nc')}"
             # Import and launch compress function
             compress(input_path, output_filename, compression="lossless", nodes=0)
+
+    def test_compress_multiple_files(self):
+        from enstools.compression.api import compress
+        datasets = ["dataset_%iD.nc" % dimension for dimension in range(1, 4)]
+        data_paths = [self.input_directory_path / ds for ds in datasets]
+        compress(data_paths, self.output_directory_path, compression="lossless")
+
+    def test_compress_fill_na(self):
+        from enstools.compression.api import compress
+        datasets = ["dataset_%iD.nc" % dimension for dimension in range(1, 4)]
+        data_paths = [self.input_directory_path / ds for ds in datasets]
+        compress(data_paths, self.output_directory_path, compression="lossless", fill_na=0.0)
+
+    def test_compress_check_compression_ratios(self):
+        from enstools.compression.api import compress
+        datasets = ["dataset_%iD.nc" % dimension for dimension in range(1, 4)]
+        data_paths = [self.input_directory_path / ds for ds in datasets]
+        compress(data_paths, self.output_directory_path, compression="lossless", show_compression_ratios=True)
+
+    def test_compress_check_compression_ratios_single_output(self):
+        from enstools.compression.api import compress
+        # Check that the compression without specifying compression parameters works
+        data_path = self.input_directory_path / "dataset_3D.nc"
+        compress(data_path, self.output_directory_path / "dummy.nc", compression="lossless", show_compression_ratios=True)
+
+    def test_compress_with_emulate(self):
+        from enstools.compression.api import compress
+        # Check that the compression without specifying compression parameters works
+        datasets = ["dataset_%iD.nc" % dimension for dimension in range(1, 4)]
+        data_paths = [self.input_directory_path / ds for ds in datasets]
+        compress(data_paths, self.output_directory_path, compression="lossless", emulate=True)
+
+    def test_compress_with_keep_variables(self):
+        from enstools.compression.api import compress
+        # Check that the compression without specifying compression parameters works
+        datasets = ["dataset_%iD.nc" % dimension for dimension in range(1, 4)]
+        data_paths = [self.input_directory_path / ds for ds in datasets]
+        compress(data_paths, self.output_directory_path, compression="lossless", variables_to_keep=["temperature"])
+
+
+
+
 
 
