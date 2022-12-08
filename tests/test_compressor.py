@@ -70,14 +70,6 @@ class TestCompressor(TestClass):
             final_size = file_size(output_file_path)
             assert initial_size > final_size
 
-    def test_filters_availability(self):
-        from enstools.encoding.api import check_filters_availability
-        assert check_filters_availability()
-
-    def test_blosc_filter_availability(self):
-        from enstools.encoding.api import check_blosc_availability
-        assert check_blosc_availability
-
     def test_specify_single_file_output_name(self):
         from enstools.compression.api import compress
         # Check that the compression without specifying compression parameters works

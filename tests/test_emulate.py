@@ -1,4 +1,5 @@
-from enstools.encoding.api import Compressors, CompressionModes, check_libpressio_availability
+from enstools.encoding.api import Compressors, CompressionModes
+from enstools.compression.emulators.LibpressioEmulator import libpressio_is_available
 from utils import TestClass
 import numpy as np
 
@@ -20,7 +21,7 @@ class TestEmulators:
         recovered_data = analysis_compressor.compress_and_decompress(data)
         print(f"Compression Ratio:{analysis_compressor.compression_ratio():.2f}")
 
-    @pytest.mark.skipif(not check_libpressio_availability(), reason="Requires LibPressio")
+    @pytest.mark.skipif(not libpressio_is_available(), reason="Requires LibPressio")
     def test_LibpressioEmulator(self):
         from enstools.compression.emulators import LibpressioEmulator
 

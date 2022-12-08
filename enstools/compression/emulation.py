@@ -6,8 +6,8 @@
 """
 from typing import Union, Tuple
 from enstools.encoding.definitions import Compressors
-from enstools.encoding.api import FilterEncodingForH5py, FilterEncodingForXarray, check_libpressio_availability,\
-    check_zfp_availability, check_sz_availability, check_blosc_availability
+from enstools.encoding.api import FilterEncodingForH5py, FilterEncodingForXarray
+from .emulators import default_emulator
 from enstools.core.errors import EnstoolsError
 import xarray
 import numpy
@@ -40,7 +40,7 @@ def emulate_compression_on_dataset(dataset: xarray.Dataset, compression: Union[s
         if var_compression and var_compression.compressor != Compressors.BLOSC:
             dataset[variable], dataset_metrics[variable] = emulate_compression_on_data_array(dataset[variable],
                                                                                              var_compression)
-    if cache_was_on:                                                                                             
+    if cache_was_on:
         cache.register()
     return dataset, dataset_metrics
 
@@ -65,38 +65,17 @@ def emulate_compression_on_numpy_array(data: numpy.ndarray, compression_specific
     if compression_specification.compressor in [Compressors.BLOSC, Compressors.NONE]:
         return data, {}
 
-    # For performance reasons, Libpressio is the preferred backend for emulation.
-    # It will be used if available, otherwise we will rely on the filters and
-    if check_libpressio_availability():
-        from enstools.compression.emulators import LibpressioEmulator
-        emulator_backend = LibpressioEmulator
-    else:
-        from enstools.compression.emulators.FiltersEmulator import FilterEmulator
-        emulator_backend = FilterEmulator
-        # Check that the proper filter is actually available:
-        if not check_compressor_availability(compression_specification.compressor):
-            raise EnstoolsError(f"Trying to use {compression_specification.compressor!r} which is not available")
+    emulator_backend = default_emulator
 
     uncompressed_data = data
     decompressed_data = uncompressed_data.copy()
 
     compressor = emulator_backend(
         compressor_name=compression_specification.compressor,
-        mode= compression_specification.mode,
+        mode=compression_specification.mode,
         parameter=compression_specification.parameter,
         uncompressed_data=decompressed_data)
 
     decompressed = compressor.compress_and_decompress(decompressed_data)
     metrics = {"compression_ratio": compressor.compression_ratio()}
     return decompressed, metrics
-
-
-def check_compressor_availability(compressor: Compressors) -> bool:
-    if compressor is Compressors.ZFP:
-        return check_zfp_availability()
-    elif compressor is Compressors.SZ:
-        return check_sz_availability()
-    elif compressor is Compressors.BLOSC:
-        return check_blosc_availability()
-    else:
-        raise NotImplementedError(f"Compressor: {compressor} hasn't been implemented.")
