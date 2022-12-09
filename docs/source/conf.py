@@ -29,6 +29,7 @@ extensions = [
     'numpydoc',
     'sphinx_copybutton',
     'nbsphinx',
+    'nbsphinx_link',
     'IPython.sphinxext.ipython_console_highlighting'
 ]
 

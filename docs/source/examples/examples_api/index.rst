@@ -8,7 +8,7 @@ Jupyter Notebooks
     :maxdepth: 1
     :glob:
 
-    compress_file.ipynb
+    compress_file.nblink
 
 More Python API examples
 ========================
