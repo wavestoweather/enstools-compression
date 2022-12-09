@@ -11,10 +11,10 @@ Examples
 
         .. image:: ../images/icons/api.svg
             :width: 50%
-            :alt: Alternative text
+            :alt: API
             :align: center
 
-        .. button-ref:: examples_api
+        .. button-ref:: examples_api/index
             :expand:
             :color: secondary
             :click-parent:
@@ -26,7 +26,7 @@ Examples
 
         .. image:: ../images/icons/cli.svg
             :width: 50%
-            :alt: Alternative text
+            :alt: CLI
             :align: center
 
 
@@ -41,5 +41,5 @@ Examples
     :maxdepth: 2
     :hidden:
 
-    examples_api.rst
+    examples_api/index.rst
     examples_cli.rst

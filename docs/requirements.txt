@@ -3,4 +3,6 @@ sphinxcontrib-autoprogram
 sphinx_design
 sphinx_rtd_theme
 sphinx-copybutton
+nbsphinx
+ipykernel
 

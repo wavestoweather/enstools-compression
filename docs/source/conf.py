@@ -28,10 +28,20 @@ extensions = [
     'sphinx_design',
     'numpydoc',
     'sphinx_copybutton',
+    'nbsphinx',
+    'IPython.sphinxext.ipython_console_highlighting'
 ]
+
+exclude_patterns = ['_build', '**.ipynb_checkpoints']
+
 
 # Flag to allow errors in the nbsphinx thingy
 nbsphinx_allow_errors = True
+
+# Set the kernel
+nbsphinx_kernel_name = 'python3'
+
+
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
