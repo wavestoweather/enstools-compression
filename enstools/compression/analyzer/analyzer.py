@@ -15,6 +15,8 @@ from .AnalysisOptions import AnalysisOptions, AnalysisParameters
 from .analyze_data_array import analyze_data_array, ANALYSIS_DIAGNOSTIC_METRICS, COMPRESSION_RATIO_LABEL
 from enstools.compression.compressor import drop_variables
 
+logger = logging.getLogger("enstools.compression.analysis")
+
 
 def find_optimal_encoding(dataset: xarray.Dataset, options: AnalysisOptions):
     """
@@ -136,7 +138,7 @@ def find_encodings_for_all_combinations(dataset: xarray.Dataset, options: Analys
                 combination_metrics[var] = {COMPRESSION_RATIO_LABEL: 1.0}
                 continue
             if not np.issubdtype(dataset[var].dtype, np.floating):
-                logging.debug(
+                logger.debug(
                     f"Variable {var} is not a float, it is {dataset[var].dtype}. Going with lossless.")
                 combination_encoding[var] = "lossless"
                 combination_metrics[var] = {COMPRESSION_RATIO_LABEL: 1.0}
@@ -149,7 +151,7 @@ def find_encodings_for_all_combinations(dataset: xarray.Dataset, options: Analys
             combination_encoding[var] = variable_encoding
             combination_metrics[var] = variable_metrics
             # (dataset, variable_name, thresholds, compressor_name, mode)
-            logging.info(f"{var} {variable_encoding}  CR:{variable_metrics[COMPRESSION_RATIO_LABEL]:.1f}")
+            logger.debug(f"{var} {variable_encoding}  CR:{variable_metrics[COMPRESSION_RATIO_LABEL]:.1f}")
         encodings[combination] = combination_encoding
         metrics[combination] = combination_metrics
 
