@@ -64,14 +64,6 @@ def transfer(file_paths: Union[List[str], str, Path, List[Path]],
     # Just make sure that output is a Path object
     output = Path(output).resolve()
 
-    from dask.diagnostics import ProgressBar
-
-    use_progress_bar = False
-
-    if use_progress_bar:
-        p = ProgressBar()
-        p.register()
-
     # If we have a single file, we might accept a output filename instead of an output folder.
     # Some assertions first to prevent wrong usage.
     if len(file_paths) == 0:
@@ -95,8 +87,6 @@ def transfer(file_paths: Union[List[str], str, Path, List[Path]],
             emulate=emulate,
             fill_na=fill_na,
         )
-    if use_progress_bar:
-        p.unregister()
 
 
 def transfer_multiple_files(
@@ -200,7 +190,7 @@ def destination_path(origin_path: Path, destination_folder: Path):
 
     Returns the path to the new file that will be placed in the destination folder.
     """
-    from os.path import join, basename, splitext
+    from os.path import splitext
     from enstools.io.file_type import get_file_type
 
     file_name = origin_path.name
@@ -292,34 +282,21 @@ def compress(
         check_compression_ratios(file_paths, output)
 
 
-def check_compression_ratios(file_paths: Union[List[str], str], output: str):
+def check_compression_ratios(file_paths: List[Path], output: Path):
     # Compute compression ratios
     from .size_metrics import compression_ratio
     from os.path import join, basename
     from pprint import pprint
     compression_ratios = {}
 
-    # Single file case
-    if isinstance(file_paths, str):
-        file_path = file_paths
-        if isdir(output):
-            file_name = basename(file_path)
-            new_file_path = join(output, file_name)
-        elif isfile(output):
-            new_file_path = output
-        else:
-            raise NotImplementedError
-        CR = compression_ratio(file_path, new_file_path)
-        print(f"Compression ratios after compression:\nCR: {CR:.1f}")
-        return
-
-    # Multiple files
     for file_path in file_paths:
-        file_name = basename(file_path)
+        file_name = file_path.name
         file_name = fix_filename(file_name)
-        new_file_path = join(output, file_name)
-        if isfile(new_file_path):
-            CR = compression_ratio(file_path, new_file_path)
-            compression_ratios[basename(file_path)] = CR
+        if output.is_dir():
+            new_file_path = output / file_name
+        elif output.is_file():
+            new_file_path = output
+        CR = compression_ratio(file_path.as_posix(), new_file_path.as_posix())
+        compression_ratios[file_name] = CR
     print("Compression ratios after compression:")
     pprint(compression_ratios)

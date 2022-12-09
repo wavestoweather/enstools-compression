@@ -98,10 +98,10 @@ class EnstoolsCompressionDatasetAccessor:
 
     def analyze(self,
                 constrains="correlation_I:5,ssim_I:2",
-                fill_na: bool = False,
+                **kwargs
                 ) -> tuple[str, dict]:
         from enstools.compression.analyzer.analyzer import analyze_dataset
-        return analyze_dataset(dataset=self._obj, constrains=constrains, fill_na=fill_na)
+        return analyze_dataset(dataset=self._obj, constrains=constrains, **kwargs)
 
     def __call__(self, compression: str, in_place=False) -> xarray.Dataset:
         """

@@ -83,31 +83,6 @@ def apply_mask(array: np.array, mask: np.integer) -> np.array:
     return masked_array.view(array.dtype)
 
 
-def binary_representation(array: np.ndarray):
-    """
-    It returns a binary representation of an array.
-    """
-    bits = array.itemsize * 8
-    array = array.ravel()
-
-    int_type = get_uint_type_by_bit_length(bits)
-    # Create a integer view of the data to be usable with binary_repr
-    array = array.view(dtype=int_type)
-
-    def wrapper(v):
-        return np.binary_repr(v, width=bits)
-
-    wrapper_vectorized = np.vectorize(wrapper)
-
-    try:
-        if isinstance(array, np.ndarray):
-            return wrapper_vectorized(array)
-        return np.binary_repr(array, bits)
-    except Exception as err:
-        print(type(array))
-        raise err
-
-
 def bit_in_position(array: np.array, position: int) -> np.array:
     assert array.ndim == 1
 
@@ -123,21 +98,7 @@ def bit_in_position(array: np.array, position: int) -> np.array:
     return np.uint8(x)
 
 
-def bit_count(array: np.array, position: int):
-    x = bit_in_position(array, position=position)
-    return np.sum(x)
-
-
-def bit_probabilities(array: np.array):
-    # The number of bits per value its equal to the array type size in bytes multiplied by 8
-    byte_length = array.dtype.itemsize
-    bit_length = byte_length * 8
-    _bits = range(bit_length)
-
-    counted_bits = [bit_count(array, pos) for pos in _bits]
-    return [c / (len(array)) for c in counted_bits]
-
-#TODO: Need to better document and explain what these functions are, after a month I don't even remember myself what it is.
+# TODO: Need to better document and explain what these functions are, I don't even remember myself what it is.
 def entropy_(p):
     s = 0.
     z = 0.
@@ -149,23 +110,6 @@ def entropy_(p):
 
 def entropy__(p, base):
     return entropy_(p) / np.log(base)
-
-
-def bitpattern_entropy_per_bit(array: np.array):
-    probabilities = bit_probabilities(array)
-    return [entropy__([p, 1 - p], base=2) for p in probabilities]
-
-
-def bitpattern_entropy(A):
-    return new_entropy(A)
-
-
-def new_entropy(array: np.array):
-    unique, counts = np.unique(array, return_counts=True)
-    probabilities = counts / array.size
-    p = probabilities
-    E = - np.sum(p * np.log2(p))
-    return E
 
 
 def bit_conditional_count(array: np.array):
@@ -250,7 +194,7 @@ def filter_insignificant_values(mutual_information_list, number_of_elements):
 def binom_confidence(number_of_elements, confidence):
     from scipy.stats import binom
     return binom.ppf(confidence, number_of_elements, .5) / number_of_elements
-    
+
 
 def minimum_meaningful_value(number_of_elements, confidence=0.99):
     p = binom_confidence(number_of_elements=number_of_elements, confidence=confidence)
@@ -271,7 +215,7 @@ def analyze_file_significant_bits(file_path) -> dict:
     for variable in variables:
         exp_info, mantissa_info, nsb = analyze_variable_significant_bits(dataset[variable])
         results[variable] = nsb
-    
+
     return results
 
 
@@ -360,10 +304,10 @@ def mutual_information_report(mutual_information_list, n):
     # Get accumulated information up to certain bit
     accumulated = [mantissa_bits[0]]
     for bit_information in mantissa_bits[1:]:
-        accumulated.append(accumulated[-1]+bit_information)
-    
+        accumulated.append(accumulated[-1] + bit_information)
+
     accumulated_over_threshold = accumulated > preserved_information_threshold
-    
+
     # Get number of significant bits that fullfill mantaining the defined threshold.
     number_of_significant_mantissa_bits = accumulated_over_threshold.tolist().index(True)
     number_of_significant_bits = first_mantissa_bit + number_of_significant_mantissa_bits

@@ -9,14 +9,20 @@ from enstools.encoding.api import Compressors, CompressionModes, compression_mod
 from enstools.compression.emulators.EmulatorClass import Emulator
 
 
+def libpressio_is_available():
+    """
+    Check if libpressio is available.
+    """
+    try:
+        from libpressio import PressioCompressor
+        return True
+    except ModuleNotFoundError:
+        return False
+
+
 class LibpressioEmulator(Emulator):
     def __init__(self, compressor_name: Compressors, mode: CompressionModes, parameter: float, uncompressed_data: np.ndarray):
-        try:
-            from libpressio import PressioCompressor
-        except ModuleNotFoundError as err:
-            print(
-                "The library libpressio its not available, can not proceed with analysis.")
-            raise err
+        from libpressio import PressioCompressor
         self._config = compressor_configuration(
             compressor_name, mode, parameter, uncompressed_data)
         self.compressor = PressioCompressor.from_config(self._config)
