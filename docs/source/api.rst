@@ -1,5 +1,5 @@
 Python API
-===============================================
+==========
 
 ..
    This are the things that are made accessible through the api.py file:
@@ -37,7 +37,7 @@ Significant Bits
     enstools.compression.api.analyze_file_significant_bits
 
 Pruner
-----------------
+------
 .. autosummary::
    :toctree: pruner
 
@@ -55,7 +55,7 @@ Emulation
     enstools.compression.api.emulate_compression_on_numpy_array
 
 Evaluation
----------
+----------
 .. autosummary::
    :toctree: evaluate
 
