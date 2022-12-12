@@ -157,14 +157,10 @@ def transfer_file(origin: Path, destination: Path, compression: str, variables_t
     if variables_to_keep is not None:
         dataset = drop_variables(dataset, variables_to_keep)
 
-    # If we don't chunk the dataset before writing, it might try to operate with the full array leading to
-    # memory issues
-    chunks = {k: v if k != "time" else 1 for k, v in dataset.chunksizes.items()}
-    dataset = dataset.chunk(chunks)
-
     if fill_na is not False:
         dataset = dataset.fillna(fill_na)
         logging.info(f"Filling missing values with {fill_na!r}")
+
     # In case we are using emulate, we compress and decompress the dataset using LibPressio and output
     # the file without compression only to measure the impact compression would have.
     if emulate:
@@ -250,7 +246,7 @@ def compress(
         else:
             compression_parameters_path = output.parent.resolve() / "compression_parameters.yaml"
         # By using thresholds = None we will be using the default values.
-        analyze_files(file_paths=file_paths,output_file=compression_parameters_path)
+        analyze_files(file_paths=file_paths, output_file=compression_parameters_path)
         # Now lets continue setting compression = compression_parameters_path
         compression = compression_parameters_path
 
