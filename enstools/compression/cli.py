@@ -94,6 +94,7 @@ To do that, specify the number of nodes to use:
 
 """
 
+
 # For each possible usage (compress, analyze, ...) we will define a function to add
 # the corresponding command line arguments to the parser and another one to manage the call
 
@@ -204,6 +205,7 @@ The constrain specification must be provided in the following format:
 
 """
 
+
 def add_subparser_analyzer(subparsers):
     import argparse
 
@@ -300,6 +302,7 @@ Nat Comput Sci 1, 713-724 (2021). https://doi.org/10.1038/s43588-021-00156-2
 
 """
 
+
 def add_subparser_significand(subparsers):
     import argparse
 
@@ -331,6 +334,7 @@ evaluate:
 Tool to quickly compare two datasets, mainly though to compare a compressed dataset with its reference.
 
 """
+
 
 def add_subsubparser(subparsers):
     import argparse
@@ -365,6 +369,7 @@ pruner:
 Tool to prune a file up to a certain number of significant bits.
 
 """
+
 
 def add_subparser_pruner(subparsers):
     import argparse
