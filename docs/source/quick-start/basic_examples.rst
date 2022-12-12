@@ -23,7 +23,7 @@ An example with lossy compression:
 
 
 Compress an existing file
-----------------------
+-------------------------
 
 Using the **Command Line Interface** it is very easy to compress existing files as well:
 
@@ -35,7 +35,7 @@ An example with lossy compression:
 
 
 Analyze a dataset to find compression specifications
--------------------------------------
+----------------------------------------------------
 
 To find compression specifications, an automatic search function **enstools.compression.analyze_dataset** can be used to find which compression parameters yield the highest compression ratio while keeping certain quality constrains:
 
@@ -54,7 +54,7 @@ This stands for 5 9s of correlation (0.99999) and 2 9s of structural similarity 
     specifications, metrics = analyze_dataset(dataset, constrains="correlation:0.99999,ssim:0.99")
 
 Analyze a file to find compression specifications using the command line interface
--------------------------------------
+----------------------------------------------------------------------------------
 
 The same function **enstools.compression.analyze_dataset** can be used from the **Command Line Interface**.
 

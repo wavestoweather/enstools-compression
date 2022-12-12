@@ -28,6 +28,7 @@ Finding compression parameters
 :meth:`enstools.compression.api.analyze_dataset`
 
 To analyze a dataset:
+
 .. code::
 
     from enstools.io import read
@@ -35,6 +36,17 @@ To analyze a dataset:
 
     with read("input.nc") as dataset:
         results = analyze_dataset(dataset)
+
+It is possible to use different constrains:
+
+.. code::
+
+    from enstools.io import read
+    from enstools.encoding.api import analyze_dataset
+
+    with read("input.nc") as dataset:
+        results = analyze_dataset(dataset, constrains="correlation_I:7,ssim_I:5)
+
 
 To analyze a file:
 
