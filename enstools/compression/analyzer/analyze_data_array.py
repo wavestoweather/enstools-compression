@@ -6,13 +6,11 @@ import warnings
 import numpy as np
 import xarray
 
-from enstools.core.errors import EnstoolsError
-from enstools.encoding.api import compression_mode_aliases, compressor_aliases, Compressors, \
-    check_libpressio_availability
+from enstools.encoding.api import VariableEncoding
 from enstools.encoding.rules import COMPRESSION_SPECIFICATION_SEPARATOR
 from enstools.compression.emulators.EmulatorClass import Emulator
 from .AnalysisOptions import AnalysisOptions
-from enstools.compression.emulators import LibpressioEmulator, ZFPEmulator, FilterEmulator, default_emulator
+from enstools.compression.emulators import default_emulator
 from .analyzer_utils import get_metrics, get_parameter_range, bisection_method
 
 # These metrics will be used to select within the different encodings when aiming at a certain compression ratio.
@@ -106,8 +104,11 @@ def define_functions_to_optimize(data_array: xarray.DataArray, options: Analysis
 
         # Set buffers
         uncompressed_data = data_array.values
+
+        # Get encoding from options:
+        encoding = VariableEncoding(compressor=options.compressor, mode=options.mode, parameter=parameter)
         # Create compressor for case
-        analysis_compressor = default_emulator(options.compressor, options.mode, parameter, uncompressed_data)
+        analysis_compressor = default_emulator(encoding, uncompressed_data)
         # Compress and decompress data
         decompressed = analysis_compressor.compress_and_decompress(uncompressed_data)
         # Assign values to target data_array (need to use enstools metrics)

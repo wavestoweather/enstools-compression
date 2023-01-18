@@ -19,7 +19,7 @@ class TestCompressor(TestClass):
                                   "temperature": "lossy,zfp,rate,3",
                                   "precipitation": "lossless",
                                   }
-        json_file_path = self.input_directory_path /  "compression.json"
+        json_file_path = self.input_directory_path / "compression.json"
         with json_file_path.open("w") as out_file:
             json.dump(compression_parameters, out_file)
         compression = json_file_path
@@ -39,6 +39,7 @@ class TestCompressor(TestClass):
         compression = yaml_file_path
         wrapper(self, compression=compression)
 
+    # TODO: Is it something worth having?
     def test_compress_auto(self):
         compression = "auto"
         wrapper(self, compression=compression)
