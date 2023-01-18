@@ -8,7 +8,7 @@ import xarray
 
 from enstools.encoding.api import VariableEncoding
 from enstools.encoding.rules import COMPRESSION_SPECIFICATION_SEPARATOR
-from enstools.compression.emulators.EmulatorClass import Emulator
+
 from .AnalysisOptions import AnalysisOptions
 from enstools.compression.emulators import default_emulator
 from .analyzer_utils import get_metrics, get_parameter_range, bisection_method
