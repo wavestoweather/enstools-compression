@@ -12,6 +12,8 @@ def create_synthetic_dataset(directory: str) -> None:
     import pandas as pd
     from scipy.ndimage import gaussian_filter
     from os.path import join
+
+    np.random.seed(1)
     # Create synthetic datasets
     nx, ny, nz, m, t = 120, 91, 31, 5, 2
     lon = np.linspace(-180, 180, nx)
@@ -64,7 +66,6 @@ def file_size(file_path) -> int:
 def wrapper(cls, compression=None):
     import enstools.compression.api
     import enstools.io
-    from os.path import join
     # Check that the compression without specifying compression parameters works
     datasets = ["dataset_%iD.nc" % dimension for dimension in range(1, 4)]
     for ds in datasets:
