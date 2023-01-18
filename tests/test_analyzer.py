@@ -24,6 +24,17 @@ class TestAnalyzer(TestClass):
             input_path = input_tempdir / ds
             analyze_files(file_paths=[input_path], compressor="zfp")
 
+    def test_analyzer_zfp_precision(self):
+        from enstools.compression.api import analyze_files
+        from enstools.encoding.dataset_encoding import DatasetEncoding
+        input_tempdir = self.input_directory_path
+        # Check that the compression without specifying compression parameters works
+        datasets = ["dataset_%iD.nc" % dimension for dimension in range(1, 4)]
+        for ds in datasets:
+            input_path = input_tempdir / ds
+            encoding, _ = analyze_files(file_paths=[input_path], compressor="zfp", mode="precision")
+            ds_encoding = DatasetEncoding(None, encoding)
+
     def test_inverse_analyzer(self):
         """
         This tests checks that we can find compression parameters to fulfill a certain compression ratio.
@@ -40,7 +51,10 @@ class TestAnalyzer(TestClass):
         datasets = ["dataset_%iD.nc" % dimension for dimension in range(3, 4)]
         for ds in datasets:
             input_path = input_tempdir / ds
-            encodings, metrics = analyze_files(file_paths=[input_path], constrains=constrains)
+            encodings, metrics = analyze_files(file_paths=[input_path],
+                                               constrains=constrains,
+                                               compressor="sz",
+                                               mode="abs")
             if not metrics:
                 raise AssertionError("Metrics shouldn't be empty")
 

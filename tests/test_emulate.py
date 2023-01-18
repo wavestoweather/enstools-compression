@@ -1,5 +1,5 @@
-from enstools.encoding.api import Compressors, CompressionModes
 from enstools.compression.emulators.LibpressioEmulator import libpressio_is_available
+from enstools.encoding.api import VariableEncoding
 from utils import TestClass
 import numpy as np
 
@@ -10,13 +10,15 @@ class TestEmulators:
     def test_ZFPEmulator(self):
         from enstools.compression.emulators import ZFPEmulator
         settings = {
-            "compressor_name": Compressors.ZFP,
-            "mode": CompressionModes.RATE,
+            "compressor": "zfp",
+            "mode": "rate",
             "parameter": 3.2,
         }
+
+        encoding = VariableEncoding(**settings)
         data_size = (100, 100)
         data = np.random.random(data_size)
-        analysis_compressor = ZFPEmulator(**settings, uncompressed_data=data)
+        analysis_compressor = ZFPEmulator(encoding, uncompressed_data=data)
 
         recovered_data = analysis_compressor.compress_and_decompress(data)
         print(f"Compression Ratio:{analysis_compressor.compression_ratio():.2f}")
@@ -26,44 +28,60 @@ class TestEmulators:
         from enstools.compression.emulators import LibpressioEmulator
 
         settings = {
-            "compressor_name": Compressors.ZFP,
-            "mode": CompressionModes.RATE,
+            "compressor": "zfp",
+            "mode": "rate",
             "parameter": 3.2,
         }
         data_size = (100, 100)
         data = np.random.random(data_size)
-        analysis_compressor = LibpressioEmulator(**settings, uncompressed_data=data)
+        encoding = VariableEncoding(**settings)
+        analysis_compressor = LibpressioEmulator(encoding, uncompressed_data=data)
 
-        recovered_data = analysis_compressor.compress_and_decompress(data)
+        _ = analysis_compressor.compress_and_decompress(data)
         print(f"Compression Ratio:{analysis_compressor.compression_ratio():.2f}")
 
-    def test_FilterAnalysisCompressor(self):
-        import hdf5plugin
+    def test_FilterEmulator(self):
         from enstools.compression.emulators import FilterEmulator
         settings = {
-            "compressor_name": Compressors.ZFP,
-            "mode": CompressionModes.RATE,
+            "compressor": "zfp",
+            "mode": "rate",
             "parameter": 3.2,
         }
         data_size = (100, 100)
         data = np.random.random(data_size)
-        analysis_compressor = FilterEmulator(**settings, uncompressed_data=data)
 
-        recovered_data = analysis_compressor.compress_and_decompress(data)
+        encoding = VariableEncoding(**settings)
+        analysis_compressor = FilterEmulator(encoding, uncompressed_data=data)
+
+        _ = analysis_compressor.compress_and_decompress(data)
+        print(f"Compression Ratio:{analysis_compressor.compression_ratio():.2f}")
+
+    def test_FilterEmulator_lossless(self):
+        from enstools.compression.emulators import FilterEmulator
+        data_size = (1000, 1000)
+        data = np.sort(np.float32(np.random.randint(0, 10, size=data_size)))
+
+        encoding = VariableEncoding("lossless")
+
+        analysis_compressor = FilterEmulator(encoding, uncompressed_data=data)
+
+        _ = analysis_compressor.compress_and_decompress(data)
         print(f"Compression Ratio:{analysis_compressor.compression_ratio():.2f}")
 
     def test_FilterAnalysisCompressor_with_SZ(self):
         from enstools.compression.emulators import FilterEmulator
         settings = {
-            "compressor_name": Compressors.SZ,
-            "mode": CompressionModes.REL,
+            "compressor": "sz",
+            "mode": "rel",
             "parameter": 0.001,
         }
         data_size = (100, 100)
         data = np.random.random(data_size)
-        analysis_compressor = FilterEmulator(**settings, uncompressed_data=data)
 
-        recovered_data = analysis_compressor.compress_and_decompress(data)
+        encoding = VariableEncoding(**settings)
+        analysis_compressor = FilterEmulator(encoding, uncompressed_data=data)
+
+        _ = analysis_compressor.compress_and_decompress(data)
         print(f"Compression Ratio:{analysis_compressor.compression_ratio():.2f}")
 
 

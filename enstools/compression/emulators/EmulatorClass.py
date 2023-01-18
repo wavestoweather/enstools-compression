@@ -4,8 +4,7 @@ Abstract class which defines the methods that the emulators need to have.
 
 from abc import ABC, abstractmethod
 import numpy as np
-
-from enstools.encoding.api import Compressors, CompressionModes
+from enstools.encoding.api import Encoding
 
 
 class Emulator(ABC):
@@ -17,9 +16,9 @@ class Emulator(ABC):
     Its is useful to evaluate the errors that are introduced by the compression.
     """
     @abstractmethod
-    def __init__(self, compressor_name: Compressors, mode: CompressionModes, parameter: float, uncompressed_data: np.ndarray):
+    def __init__(self, specification: Encoding, uncompressed_data: np.ndarray):
         """Init method requires certain parameters"""
-
+        ...
 
     @abstractmethod
     def compress_and_decompress(self, uncompressed_data: np.array) -> np.array:

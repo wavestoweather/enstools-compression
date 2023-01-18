@@ -2,48 +2,25 @@ from dataclasses import dataclass
 from typing import Union
 
 from enstools.core.errors import EnstoolsError
-from enstools.encoding.api import Compressors, CompressionModes, check_libpressio_availability
-
-compression_modes = {
-    Compressors.ZFP: [
-        CompressionModes.ACCURACY,
-        CompressionModes.RATE,
-        CompressionModes.PRECISION,
-    ],
-    Compressors.SZ: [
-        CompressionModes.ABS,
-        CompressionModes.REL,
-        CompressionModes.PW_REL,
-    ]
-}
+from enstools.encoding.api import lossy_compressors_and_modes
 
 
 @dataclass
 class AnalysisOptions:
-    compressor: Compressors
-    mode: CompressionModes
+    compressor: str
+    mode: str
     constrains: str
     thresholds: dict
 
     def __init__(self,
-                 compressor: Union[str, Compressors, None],
-                 mode: Union[str, CompressionModes, None],
+                 compressor: Union[str, None],
+                 mode: Union[str, None],
                  constrains: Union[None, str] = None,
                  thresholds: Union[None, dict] = None,
                  ):
-        if compressor is None:
-            self.compressor = Compressors.NONE
-        elif isinstance(compressor, Compressors):
-            self.compressor = compressor
-        else:
-            self.compressor = Compressors[compressor.upper()]
+        self.compressor = str(compressor)
 
-        if mode is None:
-            self.mode = CompressionModes.ALL
-        elif isinstance(mode, CompressionModes):
-            self.mode = mode
-        else:
-            self.mode = CompressionModes[mode.upper()]
+        self.mode = str(mode)
 
         if constrains and not thresholds:
             self.constrains = constrains
@@ -63,13 +40,12 @@ class AnalysisParameters:
         # If mode is not None, compressor also shouldn't be None
         if self.options.mode is not None and self.options.compressor is None:
             raise EnstoolsError(f"Compression mode is assigned to {self.options.mode} but no compressor is specified.")
-        self.multi_mode = self.options.mode is None or self.options.mode is CompressionModes.ALL
+        self.multi_mode = self.options.mode in [None, "None", "all"]
 
     @property
     def compressors(self):
-        # Check library availability and select proper analysis_function
-        if self.options.compressor is Compressors.NONE or self.options.compressor is Compressors.ALL:
-            return [Compressors.ZFP, Compressors.SZ]
+        if self.options.compressor in ["None", "all"]:
+            return [compressor for compressor in lossy_compressors_and_modes]
         else:
             return [self.options.compressor]
 
@@ -88,7 +64,10 @@ class AnalysisParameters:
         else:
             # Otherwise, loop over the possible combinations
             for compressor in self.compressors:
-                for mode in compression_modes[compressor]:
+                for mode in lossy_compressors_and_modes[compressor]:
+                    # FIXME: For now we are skipping the norm2 and psnr modes for sz3 because seem to be buggy
+                    if mode in ["norm2", "psnr"]:
+                        continue
                     combinations_dictionary[f"{compressor}:{mode}"] = (compressor, mode)
             return combinations_dictionary
 

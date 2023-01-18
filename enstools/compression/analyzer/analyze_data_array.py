@@ -6,19 +6,27 @@ import warnings
 import numpy as np
 import xarray
 
-from enstools.core.errors import EnstoolsError
-from enstools.encoding.api import compression_mode_aliases, compressor_aliases, Compressors, \
-    check_libpressio_availability
+from enstools.encoding.api import VariableEncoding
 from enstools.encoding.rules import COMPRESSION_SPECIFICATION_SEPARATOR
-from enstools.compression.emulators.EmulatorClass import Emulator
+
 from .AnalysisOptions import AnalysisOptions
-from enstools.compression.emulators import LibpressioEmulator, ZFPEmulator, FilterEmulator, default_emulator
+from enstools.compression.emulators import default_emulator
 from .analyzer_utils import get_metrics, get_parameter_range, bisection_method
 
 # These metrics will be used to select within the different encodings when aiming at a certain compression ratio.
 ANALYSIS_DIAGNOSTIC_METRICS = ["correlation_I", "ssim_I"]
 COMPRESSION_RATIO_LABEL = "compression_ratio"
 counter = 0
+
+
+def find_direct_relation(parameter_range, function_to_nullify):
+    MIN, MAX = parameter_range
+    firstQ = MIN + (MAX - MIN) / 10
+    thirdQ = MIN + 9*(MAX - MIN) / 10
+
+    eval_firstQ = function_to_nullify(firstQ)
+    eval_thirdQ = function_to_nullify(thirdQ)
+    return eval_thirdQ > eval_firstQ
 
 
 def analyze_data_array(data_array: xarray.DataArray, options: AnalysisOptions) -> Tuple[str, dict]:
@@ -45,14 +53,13 @@ def analyze_data_array(data_array: xarray.DataArray, options: AnalysisOptions) -
 
     # If the aim is a specific compression ratio, the parameter range needs to be reversed
     # because the relation between compression ratio and quality is inverse.
-    if COMPRESSION_RATIO_LABEL in options.thresholds:
-        parameter_range = tuple(reversed(parameter_range))
+    # if COMPRESSION_RATIO_LABEL in options.thresholds:
+    #     parameter_range = tuple(reversed(parameter_range))
 
     #  Ignore warnings
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        direct_relation = not (COMPRESSION_RATIO_LABEL in options.thresholds)
-        direct_relation = True
+        direct_relation = find_direct_relation(parameter_range=parameter_range, function_to_nullify=function_to_nullify)
         # Use bisection method to find optimal compression parameter.
         parameter = bisection_method(
             parameter_range,
@@ -65,7 +72,7 @@ def analyze_data_array(data_array: xarray.DataArray, options: AnalysisOptions) -
         if COMPRESSION_RATIO_LABEL not in options.thresholds:
             metrics = get_metric_from_parameter(parameter)
         else:
-            new_options = copy.copy(options)
+            new_options = copy.deepcopy(options)
             for m in ANALYSIS_DIAGNOSTIC_METRICS:
                 new_options.thresholds[m] = 1
             get_metric_from_parameter, _, _ = define_functions_to_optimize(data_array, new_options)
@@ -74,8 +81,8 @@ def analyze_data_array(data_array: xarray.DataArray, options: AnalysisOptions) -
     # Define compression specification
     separator = COMPRESSION_SPECIFICATION_SEPARATOR
     compression_spec = f"{separator}".join(["lossy",
-                                            compressor_aliases[options.compressor],
-                                            compression_mode_aliases[options.mode],
+                                            options.compressor,
+                                            options.mode,
                                             f"{parameter:.3g}",
                                             ])
 
@@ -106,8 +113,11 @@ def define_functions_to_optimize(data_array: xarray.DataArray, options: Analysis
 
         # Set buffers
         uncompressed_data = data_array.values
+
+        # Get encoding from options:
+        encoding = VariableEncoding(compressor=options.compressor, mode=options.mode, parameter=parameter)
         # Create compressor for case
-        analysis_compressor = default_emulator(options.compressor, options.mode, parameter, uncompressed_data)
+        analysis_compressor = default_emulator(encoding, uncompressed_data)
         # Compress and decompress data
         decompressed = analysis_compressor.compress_and_decompress(uncompressed_data)
         # Assign values to target data_array (need to use enstools metrics)

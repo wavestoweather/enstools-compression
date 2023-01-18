@@ -6,19 +6,27 @@ Can only work with the ZFP compressor.
 import numpy as np
 from sys import getsizeof
 from enstools.compression.emulators.EmulatorClass import Emulator
-from enstools.encoding.api import compression_mode_aliases, Compressors
 from enstools.core.errors import EnstoolsError
 import zfpy
 
+from enstools.encoding.variable_encoding import Encoding, LossyEncoding
+
 
 class ZFPEmulator(Emulator):
-    def __init__(self, compressor_name, mode, parameter, uncompressed_data):
-        mode_str = compression_mode_aliases[mode]
-        if compressor_name != "zfp" and compressor_name != Compressors.ZFP:
+    def __init__(self, specification: Encoding, uncompressed_data: np.ndarray):
+        if not isinstance(specification, LossyEncoding):
+            raise EnstoolsError("Our current implementation of ZFPEmulator only covers the lossy compressor ZFP.")
+
+        compressor_name = specification.compressor
+        mode = specification.mode
+        parameter = specification.parameter
+
+        if compressor_name != "zfp":
             raise EnstoolsError(f"Trying to use ZFP analysis compressor for compressor {compressor_name}")
-        if mode_str == "accuracy":
-            mode_str = "tolerance"
-        self.parameters = {mode_str: parameter}
+
+        if mode == "accuracy":
+            mode = "tolerance"
+        self.parameters = {mode: parameter}
         self._compression_ratio = None
 
     def compress(self, uncompressed_data: np.ndarray) -> np.ndarray:

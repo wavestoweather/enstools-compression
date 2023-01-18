@@ -5,10 +5,8 @@
 
 """
 from typing import Union, Tuple
-from enstools.encoding.definitions import Compressors
-from enstools.encoding.api import FilterEncodingForH5py, FilterEncodingForXarray
+from enstools.encoding.api import DatasetEncoding, NullEncoding, LosslessEncoding, LossyEncoding, Encoding
 from .emulators import default_emulator
-from enstools.core.errors import EnstoolsError
 import xarray
 import numpy
 
@@ -33,11 +31,11 @@ def emulate_compression_on_dataset(dataset: xarray.Dataset, compression: Union[s
     variables = [v for v in dataset.variables if v not in dataset.coords]
 
     #
-    dataset_encoding = FilterEncodingForXarray(dataset, compression)
+    dataset_encoding = DatasetEncoding(dataset, compression)
     dataset_metrics = {}
     for variable in variables:
         var_compression = dataset_encoding.encoding()[variable]
-        if var_compression and var_compression.compressor != Compressors.BLOSC:
+        if var_compression and isinstance(var_compression, LossyEncoding):
             dataset[variable], dataset_metrics[variable] = emulate_compression_on_data_array(dataset[variable],
                                                                                              var_compression)
     if cache_was_on:
@@ -45,7 +43,7 @@ def emulate_compression_on_dataset(dataset: xarray.Dataset, compression: Union[s
     return dataset, dataset_metrics
 
 
-def emulate_compression_on_data_array(data_array: xarray.DataArray, compression_specification: FilterEncodingForH5py,
+def emulate_compression_on_data_array(data_array: xarray.DataArray, compression_specification: Encoding,
                                       in_place=True) -> Tuple[xarray.DataArray, dict]:
     if not in_place:
         data_array = data_array.copy()
@@ -65,9 +63,10 @@ def emulate_compression_on_data_array(data_array: xarray.DataArray, compression_
     return data_array, compression_metrics
 
 
-def emulate_compression_on_numpy_array(data: numpy.ndarray, compression_specification: FilterEncodingForH5py) -> \
+def emulate_compression_on_numpy_array(data: numpy.ndarray, compression_specification: Encoding) -> \
         Tuple[numpy.ndarray, dict]:
-    if compression_specification.compressor in [Compressors.BLOSC, Compressors.NONE]:
+    if isinstance(compression_specification, LosslessEncoding) or \
+            isinstance(compression_specification, NullEncoding):
         return data, {}
 
     emulator_backend = default_emulator
@@ -75,11 +74,7 @@ def emulate_compression_on_numpy_array(data: numpy.ndarray, compression_specific
     uncompressed_data = data
     decompressed_data = uncompressed_data.copy()
 
-    compressor = emulator_backend(
-        compressor_name=compression_specification.compressor,
-        mode=compression_specification.mode,
-        parameter=compression_specification.parameter,
-        uncompressed_data=decompressed_data)
+    compressor = emulator_backend(compression_specification, uncompressed_data=decompressed_data)
 
     decompressed = compressor.compress_and_decompress(decompressed_data)
     metrics = {"compression_ratio": compressor.compression_ratio()}
