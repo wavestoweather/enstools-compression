@@ -116,3 +116,48 @@ class TestEmulate(TestClass):
             ds = read(input_path)
             for compression_specification in compression_specifications:
                 ds, _ = emulate_compression_on_dataset(ds, compression=compression_specification)
+
+    def test_emulation_consistency(self):
+        """
+        Test that using the emulator and actually saving the compressed file yield the same results.
+
+        Returns
+        -------
+
+        """
+        from enstools.compression.api import emulate_compression_on_dataset
+        import enstools.io
+        
+        # Emulator case
+        input_tempdir = self.input_directory_path
+        output_tempdir = self.output_directory_path
+        datasets = ["dataset_%iD.nc" % dimension for dimension in range(3, 4)]
+        compression_specifications = [
+            "lossy,sz,abs,0.1",
+            "lossy,sz,rel,0.1",
+            "lossy,sz,pw_rel,0.01",
+            "lossy,zfp,accuracy,0.01",
+            "lossy,zfp,rate,3.2",
+            "lossy,zfp,precision,12",
+        ]
+
+        for ds_name in datasets:
+            input_path = input_tempdir / ds_name
+            output_path = output_tempdir / ds_name
+            # Import and launch compress function
+            with enstools.io.read(input_path) as ds:
+                for compression_specification in compression_specifications:
+                    # Save the dataset compressed
+                    enstools.io.write(ds=ds, file_path=output_path, compression=compression_specification)
+
+                    # Reload the compressed dataset
+                    with enstools.io.read(output_path) as compressed_ds:
+                        # Emulate
+                        emulated_ds, _ = emulate_compression_on_dataset(ds,
+                                                                        compression=compression_specification,
+                                                                        in_place=False,
+                                                                        )
+                        for variable in ds.data_vars:
+                            if not np.allclose(compressed_ds[variable], emulated_ds[variable]):
+                                raise AssertionError(f"{ds_name=} {variable=} {compression_specification=}")
+
