@@ -55,12 +55,17 @@ class FilterEmulator(Emulator):
         # Calculate uncompressed size
         uncompressed_size = uncompressed_data.dtype.itemsize * uncompressed_data.size
 
+        # If the key "chunksizes" is inside the encoding, we need to rename it.
+        encoding = dict(self.compression)
+        if "chunksizes" in encoding:
+            encoding["chunks"] = encoding.pop("chunksizes")
+
         # Initialize file object
         with io.BytesIO() as bio:
         
             # Compress data
             with h5py.File(bio, mode='w') as f:
-                f.create_dataset(dummy_var, data=uncompressed_data, **self.compression)
+                f.create_dataset(dummy_var, data=uncompressed_data, **encoding)
             
             # Get compressed file
             compressed_size = bio.getbuffer().nbytes
