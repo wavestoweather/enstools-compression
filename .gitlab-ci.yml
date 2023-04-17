@@ -34,12 +34,19 @@ deploy-to-testpypi:
 
 install-from-testpypi:
   stage: test_install
-  image: python:3.8
+  image: ubuntu:rolling
   tags:
     - docker.meteo.physik.lmu.de
   only:
     - tags
   needs: ["deploy-to-testpypi"]
+  before_script:
+    - apt update
+    - export DEBIAN_FRONTEND=noninteractive
+    - apt-get install -y libproj-dev proj-data proj-bin
+    - apt-get install -y libgeos-dev
+    - apt-get install -y libeccodes-dev
+    - apt install -yq git vim python3 python3-pip python3-venv
   script:
     - pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ enstools-compression
   artifacts:
