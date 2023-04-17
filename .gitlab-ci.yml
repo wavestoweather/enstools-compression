@@ -22,7 +22,7 @@ test_docker:
 
 deploy-to-testpypi:
   stage: deploy_test
-  image: python:3.8
+  image: python:3.10
   tags:
     - docker.meteo.physik.lmu.de
   only:
@@ -56,7 +56,7 @@ install-from-testpypi:
 
 deploy-to-pypi:
   stage: deploy_prod
-  image: python:3.8
+  image: python:3.10
   only:
     - tags
   tags:
