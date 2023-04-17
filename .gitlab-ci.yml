@@ -1,6 +1,9 @@
 stages:
     - test
     - examples
+    - deploy_test
+    - test_install
+    - deploy_prod
 
 test_docker:
     stage: test
