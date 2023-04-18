@@ -99,11 +99,13 @@ To do that, specify the number of nodes to use:
 # the corresponding command line arguments to the parser and another one to manage the call
 
 ###############################
+
+
 # Compressor
 def add_subparser_compressor(subparsers):
     import argparse
 
-    subparser = subparsers.add_parser('compress', help='Compress help',
+    subparser = subparsers.add_parser('compress', help='Tool to compress files.',
                                       formatter_class=argparse.RawDescriptionHelpFormatter,
                                       description=compressor_help_text)
     subparser.add_argument("files", type=expand_paths, nargs='*',
@@ -209,8 +211,10 @@ The constrain specification must be provided in the following format:
 def add_subparser_analyzer(subparsers):
     import argparse
 
-    subparser = subparsers.add_parser('analyze', help=analyzer_help_text,
-                                      formatter_class=argparse.RawDescriptionHelpFormatter)
+    subparser = subparsers.add_parser('analyze',
+                                      help="Tool to find compression specifications that fulfill quality requirements",
+                                      formatter_class=argparse.RawDescriptionHelpFormatter,
+                                      description=analyzer_help_text)
 
     subparser.add_argument("--constrains", dest="constrains",
                            default="correlation_I:5,ssim_I:2", type=str,
@@ -295,7 +299,7 @@ def call_analyzer(args):
 significant_bits_help_text = """
 significand:
 
-Tool to find the ammount of significand bits in a data file following the approach described in Klöwer et al 2021 _[1].
+Tool to find the amount of significand bits in a data file following the approach described in Klöwer et al 2021 _[1].
 
 .. [1] Klöwer, M., Razinger, M., Dominguez, J.J. et al. Compressing atmospheric data into its real information content.
 Nat Comput Sci 1, 713-724 (2021). https://doi.org/10.1038/s43588-021-00156-2
@@ -306,8 +310,9 @@ Nat Comput Sci 1, 713-724 (2021). https://doi.org/10.1038/s43588-021-00156-2
 def add_subparser_significand(subparsers):
     import argparse
 
-    subparser = subparsers.add_parser('significand', help=significant_bits_help_text,
-                                      formatter_class=argparse.RawDescriptionHelpFormatter)
+    subparser = subparsers.add_parser('significand', help="Tool to find the amount of significand bits in a data file.",
+                                      formatter_class=argparse.RawDescriptionHelpFormatter,
+                                      description=significant_bits_help_text)
     subparser.add_argument("--output", "-o", dest="output", default=None, type=str,
                            help="Path to the file where the configuration will be saved."
                                 "If not provided will be print in the stdout.")
@@ -336,10 +341,12 @@ Tool to quickly compare two datasets, mainly though to compare a compressed data
 """
 
 
-def add_subsubparser(subparsers):
+
+def add_subparser_evaluate(subparsers):
     import argparse
     subparser = subparsers.add_parser('evaluate', help=evaluate_help_text,
-                                      formatter_class=argparse.RawDescriptionHelpFormatter)
+                                      formatter_class=argparse.RawDescriptionHelpFormatter,
+                                      description=evaluate_help_text)
     subparser.add_argument("--reference", "-r", dest="reference_file", default=None, type=str,
                            help="Path to reference file. Default=%(default)s", required=True)
     subparser.add_argument("--target", "-t", dest="target_file", default=None, type=str,
@@ -373,8 +380,10 @@ Tool to prune a file up to a certain number of significant bits.
 
 def add_subparser_pruner(subparsers):
     import argparse
-    subparser = subparsers.add_parser('prune', help=pruner_help_text,
-                                      formatter_class=argparse.RawDescriptionHelpFormatter)
+    subparser = subparsers.add_parser('prune',
+                                      help=pruner_help_text,
+                                      formatter_class=argparse.RawDescriptionHelpFormatter,
+                                      description=pruner_help_text)
     subparser.add_argument("files", type=str, nargs="+",
                            help='List of files to compress. Multiple files and regex patterns are allowed.')
     subparser.add_argument("-o", '--output', type=str, dest="output", default=None, required=True)
@@ -405,7 +414,7 @@ def add_subparsers(parser):
     # Create the parser for the "significand" command
     add_subparser_significand(subparsers)
     # Create the parser for the "evaluator" command
-    add_subsubparser(subparsers)
+    add_subparser_evaluate(subparsers)
     # Create the parser for the "pruner" command
     add_subparser_pruner(subparsers)
     # To add an additional subparser, just create a function like the ones above and add the call here.
@@ -424,7 +433,14 @@ def expand_paths(string: str):
 ###############################
 
 def get_parser():
-    # Create parser
+    """
+    Create and configure the command line parser with subparsers for each option.
+
+    Returns
+    -------
+    parser : argparse.ArgumentParser
+        The configured command line parser with subparsers for each option.
+    """
     import argparse
 
     # Create the top-level parser
@@ -449,19 +465,20 @@ def main():
     # Parse the command line arguments
     args = parser.parse_args()
 
+    # Define a dictionary to map the option names to their respective functions
+    option_functions = {
+        "compressor": call_compressor,
+        "analyzer": call_analyzer,
+        "significand": call_significand,
+        "evaluator": call_evaluator,
+        "pruner": call_pruner,
+    }
+
     # Process options according to the selected option
     if args.which is None:
         parser.print_help()
         exit(0)
-    elif args.which == "compressor":
-        call_compressor(args)
-    elif args.which == "analyzer":
-        call_analyzer(args)
-    elif args.which == "significand":
-        call_significand(args)
-    elif args.which == "evaluator":
-        call_evaluator(args)
-    elif args.which == "pruner":
-        call_pruner(args)
+    elif args.which in option_functions:
+        option_functions[args.which](args)
     else:
         raise NotImplementedError
