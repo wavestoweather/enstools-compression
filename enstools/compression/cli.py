@@ -336,7 +336,7 @@ Tool to quickly compare two datasets, mainly though to compare a compressed data
 """
 
 
-def add_subsubparser(subparsers):
+def add_subparser_evaluator(subparsers):
     import argparse
     subparser = subparsers.add_parser('evaluate', help=evaluate_help_text,
                                       formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -389,6 +389,27 @@ def call_pruner(args):
     pruner(file_paths, output)
 
 
+def add_subparser_load_plugins(subparsers):
+    import argparse
+    load_subparser = subparsers.add_parser('load-plugins',
+                                           help="Add the HDF5PLUGINPATH path to the environment",
+                                           formatter_class=argparse.RawDescriptionHelpFormatter)
+    load_subparser.set_defaults(which='load-plugins')
+    unload_subparser = subparsers.add_parser('unload-plugins', help="Remove the HDF5PLUGINPATH from the environment",
+                                             formatter_class=argparse.RawDescriptionHelpFormatter)
+    unload_subparser.set_defaults(which='unload-plugins')
+
+
+def call_load_plugins():
+    from enstools.compression.plugins import load_plugins
+    load_plugins()
+
+
+def call_unload_plugins():
+    from enstools.compression.plugins import unload_plugins
+    unload_plugins()
+
+
 ###############################
 
 def add_subparsers(parser):
@@ -405,10 +426,11 @@ def add_subparsers(parser):
     # Create the parser for the "significand" command
     add_subparser_significand(subparsers)
     # Create the parser for the "evaluator" command
-    add_subsubparser(subparsers)
+    add_subparser_evaluator(subparsers)
     # Create the parser for the "pruner" command
     add_subparser_pruner(subparsers)
     # To add an additional subparser, just create a function like the ones above and add the call here.
+    add_subparser_load_plugins(subparsers)
 
 
 def expand_paths(string: str):
@@ -463,5 +485,9 @@ def main():
         call_evaluator(args)
     elif args.which == "pruner":
         call_pruner(args)
+    elif args.which == "load-plugins":
+        call_load_plugins()
+    elif args.which == "unload-plugins":
+        call_unload_plugins()
     else:
         raise NotImplementedError

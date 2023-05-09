@@ -19,6 +19,24 @@ class TestCommandLineInterface(TestClass):
         with pytest.raises(SystemExit):
             enstools.compression.cli.main()
 
+    def test_load_plugins(self, mocker):
+        """
+        Check that the cli prints the help and exists.
+        """
+        import enstools.compression.cli
+        commands = ["_", "load-plugins"]
+        mocker.patch("sys.argv", commands)
+        enstools.compression.cli.main()
+
+    def test_unload_plugins(self, mocker):
+        """
+        Check that the cli prints the help and exists.
+        """
+        import enstools.compression.cli
+        commands = ["_", "unload-plugins"]
+        mocker.patch("sys.argv", commands)
+        enstools.compression.cli.main()
+
     def test_compress(self, mocker):
         """
         Test enstools-compressor compress
