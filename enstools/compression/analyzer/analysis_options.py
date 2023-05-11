@@ -1,3 +1,6 @@
+"""
+Module containing AnalysisOptions and AnalysisParameters classes.
+"""
 from dataclasses import dataclass
 from typing import Union
 
@@ -7,6 +10,10 @@ from enstools.encoding.api import lossy_compressors_and_modes
 
 @dataclass
 class AnalysisOptions:
+    """
+    A class representing analysis options, including compressor, mode,
+    constraints, and thresholds.
+    """
     compressor: str
     mode: str
     constrains: str
@@ -34,6 +41,9 @@ class AnalysisOptions:
 
 @dataclass
 class AnalysisParameters:
+    """
+    A class representing analysis parameters, including the AnalysisOptions instance.
+    """
     options: AnalysisOptions
 
     def __post_init__(self):
@@ -44,15 +54,24 @@ class AnalysisParameters:
 
     @property
     def compressors(self):
+        """
+        Get the list of compressors to be used based on the AnalysisOptions instance.
+
+        :return: A list of compressor names. If the option is "None" or "all",
+                 it returns all available compressors from the `lossy_compressors_and_modes` dictionary.
+                 Otherwise, it returns a list containing a single compressor specified in the options.
+        """
         if self.options.compressor in ["None", "all"]:
-            return [compressor for compressor in lossy_compressors_and_modes]
-        else:
-            return [self.options.compressor]
+            return list(lossy_compressors_and_modes)
+
+        return [self.options.compressor]
 
     def get_compressor_mode_combinations(self):
         """
-        Get a list of compressors and modes that will be evaluated.
-        :return:
+        Get a list of compressor and mode combinations that will be evaluated.
+
+        :return: A dictionary with keys in the format "compressor:mode" and
+                 values as tuples (compressor, mode).
         """
 
         combinations_dictionary = {}
@@ -61,27 +80,33 @@ class AnalysisParameters:
             combinations_dictionary[f"{self.options.compressor}:{self.options.mode}"] = (
                 self.options.compressor, self.options.mode)
             return combinations_dictionary
-        else:
-            # Otherwise, loop over the possible combinations
-            for compressor in self.compressors:
-                for mode in lossy_compressors_and_modes[compressor]:
-                    # FIXME: For now we are skipping the norm2 and psnr modes for sz3 because seem to be buggy
-                    if mode in ["norm2", "psnr"]:
-                        continue
-                    combinations_dictionary[f"{compressor}:{mode}"] = (compressor, mode)
-            return combinations_dictionary
+
+        # Otherwise, loop over the possible combinations
+        for compressor in self.compressors:
+            for mode in lossy_compressors_and_modes[compressor]:
+                # FIXME: For now we are skipping the norm2 and psnr modes for sz3 because seem to be buggy
+                if mode in ["norm2", "psnr"]:
+                    continue
+                combinations_dictionary[f"{compressor}:{mode}"] = (compressor, mode)
+        return combinations_dictionary
 
 
 def from_dict_to_csv(dictionary: dict) -> str:
     """
-    Convert a dictionary to a csv string.
+    Convert a dictionary to a CSV string.
+
+    :param dictionary: The dictionary to convert.
+    :return: The CSV string representation of the dictionary.
     """
     return ",".join([f"{key}:{value}" for key, value in dictionary.items()])
 
 
 def from_csv_to_dict(csv: str) -> dict:
     """
-    Convert a csv string to a dictionary.
+    Convert a CSV string to a dictionary.
+
+    :param csv: The CSV string to convert.
+    :return: The dictionary representation of the CSV string.
     """
     to_return = {}
     for entry in csv.split(","):

@@ -1,16 +1,29 @@
+"""
+This module registers the xarray compression accessor for Datasets and DataArrays.
+After importing this module xarray datasets can use the compression methods in a convenient way, for example:
+    dataset.compression("lossy,sz,pw_rel,0.0001")
+or 
+    data_array.compression("lossy,sz,pw_rel,0.0001")
 
-from enstools.compression.emulation import emulate_compression_on_data_array, emulate_compression_on_dataset
-from enstools.encoding.api import VariableEncoding, DatasetEncoding
+"""
+
 from os import PathLike
+from typing import Union
+
+from dask import delayed
 import xarray
 
-# Imports for typing
-from typing import Union
-from dask import delayed
+from enstools.encoding.api import VariableEncoding, DatasetEncoding
+from enstools.compression.emulation import emulate_compression_on_data_array, emulate_compression_on_dataset
+from enstools.compression.analyzer.analysis_options import AnalysisOptions
+from enstools.compression.analyzer.analyzer import analyze_data_array, analyze_dataset
 
 
 @xarray.register_dataarray_accessor("compression")
 class EnstoolsCompressionDataArrayAccessor:
+    """
+    Enstools-compression DataArray accessor class.
+    """
     def __init__(self, xarray_obj: xarray.DataArray):
         """
         Initialize the accessor saving a reference of the data array.
@@ -53,6 +66,8 @@ class EnstoolsCompressionDataArrayAccessor:
 
         Returns
         -------
+        xarray.DataArray
+
 
         """
         return self.emulate(compression=compression, in_place=in_place)
@@ -62,19 +77,44 @@ class EnstoolsCompressionDataArrayAccessor:
                 compressor="sz",
                 compression_mode="abs",
                 ):
-        from enstools.compression.analyzer.analyzer import analyze_data_array
-        from enstools.compression.analyzer.AnalysisOptions import AnalysisOptions
+        """
+        Apply the analysis method on the DataArray
 
+        Parameters
+        ----------
+        constrains: str
+        compressor: str
+        compression_mode: str
+
+        Returns
+        -------
+        dict
+
+        """
         options = AnalysisOptions(compressor, compression_mode, constrains=constrains)
         return analyze_data_array(self._obj, options=options)
 
     @staticmethod
     def encoding(compression: str):
+        """
+        Returns the VariableEncoding corresponding to this DataArray
+
+        Args:
+            compression (str): compression specification string
+
+        Returns:
+            VariableEncoding
+        """
         return VariableEncoding(specification=compression)
 
 
 @xarray.register_dataset_accessor("compression")
+# pylint: disable=too-few-public-methods
 class EnstoolsCompressionDatasetAccessor:
+    """
+    Enstools-compression Dataset accessor class.
+    """
+
     def __init__(self, xarray_obj: xarray.Dataset):
         """
         Initialize the accessor saving a reference of the dataset.
@@ -110,10 +150,32 @@ class EnstoolsCompressionDatasetAccessor:
                 constrains="correlation_I:5,ssim_I:2",
                 **kwargs
                 ):
-        from enstools.compression.analyzer.analyzer import analyze_dataset
+        """
+        Apply the analysis method on the Dataset
+
+        Parameters
+        ----------
+        constrains: str
+        compressor: str
+        compression_mode: str
+
+        Returns
+        -------
+        dict
+
+        """
         return analyze_dataset(dataset=self._obj, constrains=constrains, **kwargs)
 
     def encoding(self, compression: str):
+        """
+        Returns the DatasetEncoding corresponding to this DataArray
+
+        Args:
+            compression (str): compression specification string
+
+        Returns:
+            DatasetEncoding
+        """
         return DatasetEncoding(self._obj, compression=compression)
 
     def __call__(self, compression: str, in_place=False) -> xarray.Dataset:
@@ -134,6 +196,9 @@ class EnstoolsCompressionDatasetAccessor:
 
 @xarray.register_dataset_accessor("to_compressed_netcdf")
 class EnstoolsCompressionToCompressedNetcdf:
+    """
+    Accessor to enable the method to_compressed_netcdf to xarray Datasets
+    """
     def __init__(self, xarray_obj: xarray.Dataset):
         """
         Initialize the accessor saving a reference of the dataset.

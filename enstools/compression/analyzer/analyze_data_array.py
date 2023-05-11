@@ -1,32 +1,44 @@
+"""
+This module provides functions to find the compression specification that corresponds
+to a given data array and a set of compression options.
+
+The main function, `analyze_data_array`, takes a `data_array` and an `options` object
+and returns the compression specification and metrics computed with the compressed data.
+
+The functions use a bisection method to find the optimal compression parameter that meets
+quality requirements.
+"""
+# pylint: disable=W0603
 import copy
 import logging
-from typing import Tuple, Type, Callable, Union
 import warnings
+from typing import Tuple, Callable
 
 import numpy as np
 import xarray
 
+from enstools.compression.emulators import DefaultEmulator
 from enstools.encoding.api import VariableEncoding
 from enstools.encoding.rules import COMPRESSION_SPECIFICATION_SEPARATOR
-
-from .AnalysisOptions import AnalysisOptions
-from enstools.compression.emulators import default_emulator
+from .analysis_options import AnalysisOptions
 from .analyzer_utils import get_metrics, get_parameter_range, bisection_method
 
 # These metrics will be used to select within the different encodings when aiming at a certain compression ratio.
 ANALYSIS_DIAGNOSTIC_METRICS = ["correlation_I", "ssim_I"]
 COMPRESSION_RATIO_LABEL = "compression_ratio"
-counter = 0
+
+COUNTER = 0
 
 
 def find_direct_relation(parameter_range, function_to_nullify):
-    MIN, MAX = parameter_range
-    firstQ = MIN + (MAX - MIN) / 10
-    thirdQ = MIN + 9*(MAX - MIN) / 10
+    """Return whether the nullified function has a direct relation between the parameter and the nullified value."""
+    min_val, max_val = parameter_range
+    first_q = min_val + (max_val - min_val) / 10
+    third_q = min_val + 9 * (max_val - min_val) / 10
 
-    eval_firstQ = function_to_nullify(firstQ)
-    eval_thirdQ = function_to_nullify(thirdQ)
-    return eval_thirdQ > eval_firstQ
+    eval_first_q = function_to_nullify(first_q)
+    eval_third_q = function_to_nullify(third_q)
+    return eval_third_q > eval_first_q
 
 
 def analyze_data_array(data_array: xarray.DataArray, options: AnalysisOptions) -> Tuple[str, dict]:
@@ -41,8 +53,9 @@ def analyze_data_array(data_array: xarray.DataArray, options: AnalysisOptions) -
     # Check if the array contains any nan
     contains_nan = np.isnan(data_array.values).any()
     if contains_nan:
-        logging.warning(f"The variable {data_array.name!r} contains NaN. Falling to 'lossless'.\n"
-                        "It is possible to prevent that replacing the NaN values using the parameter --fill-na")
+        logging.warning("The variable %scontains NaN. Falling to 'lossless'.\n"
+                        "It is possible to prevent that replacing the NaN values using the parameter --fill-na",
+                        data_array.name)
         return "lossless", {**{COMPRESSION_RATIO_LABEL: 1.0}, **{met: 0. for met in ANALYSIS_DIAGNOSTIC_METRICS}}
 
     # Define the functions that will be used to find optimal parameters
@@ -73,8 +86,8 @@ def analyze_data_array(data_array: xarray.DataArray, options: AnalysisOptions) -
             metrics = get_metric_from_parameter(parameter)
         else:
             new_options = copy.deepcopy(options)
-            for m in ANALYSIS_DIAGNOSTIC_METRICS:
-                new_options.thresholds[m] = 1
+            for metric in ANALYSIS_DIAGNOSTIC_METRICS:
+                new_options.thresholds[metric] = 1
             get_metric_from_parameter, _, _ = define_functions_to_optimize(data_array, new_options)
             metrics = get_metric_from_parameter(parameter)
 
@@ -86,7 +99,7 @@ def analyze_data_array(data_array: xarray.DataArray, options: AnalysisOptions) -
                                             f"{parameter:.3g}",
                                             ])
 
-    logging.debug(f"Evaluated the function {counter} times.")
+    logging.debug("Evaluated the function %d times.", COUNTER)
     return compression_spec, metrics
 
 
@@ -96,8 +109,8 @@ def define_functions_to_optimize(data_array: xarray.DataArray, options: Analysis
     Function to get methods that will be used to perform a bisection method and find proper compression parameters.
     """
     thresholds = options.thresholds
-    global counter
-    counter = 0
+    global COUNTER
+    COUNTER = 0
 
     # Using a cache allows us to avoid recomputing when using the same parameters.
     # @functools.lru_cache
@@ -106,8 +119,8 @@ def define_functions_to_optimize(data_array: xarray.DataArray, options: Analysis
         This function will return a dictionary with different metrics computed with data that has been compressed
         with a specific parameter.
         """
-        global counter
-        counter += 1
+        global COUNTER
+        COUNTER += 1
 
         target = data_array.copy(deep=True)
 
@@ -117,7 +130,7 @@ def define_functions_to_optimize(data_array: xarray.DataArray, options: Analysis
         # Get encoding from options:
         encoding = VariableEncoding(compressor=options.compressor, mode=options.mode, parameter=parameter)
         # Create compressor for case
-        analysis_compressor = default_emulator(encoding, uncompressed_data)
+        analysis_compressor = DefaultEmulator(encoding, uncompressed_data)
         # Compress and decompress data
         decompressed = analysis_compressor.compress_and_decompress(uncompressed_data)
         # Assign values to target data_array (need to use enstools metrics)
@@ -136,7 +149,7 @@ def define_functions_to_optimize(data_array: xarray.DataArray, options: Analysis
 
         """
         metrics = get_metrics_from_parameter(parameter)
-        return min([metrics[metric] - options.thresholds[metric] for metric in thresholds.keys()])
+        return min(metrics[metric] - options.thresholds[metric] for metric in thresholds.keys())
 
     def constrain(parameter):
         """

@@ -1,6 +1,10 @@
-from .ZFPEmulator import ZFPEmulator
-from .FiltersEmulator import FilterEmulator
-from .LibpressioEmulator import LibpressioEmulator
+"""
+Import the different implementations of the Emulator abstract class to make them accessible.
+"""
+
+from .zfp_emulator import ZFPEmulator
+from .filters_emulator import FilterEmulator
+from .libpressio_emulator import LibpressioEmulator
 
 # Define the default emulator
-default_emulator = FilterEmulator
+DefaultEmulator = FilterEmulator

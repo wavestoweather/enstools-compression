@@ -1,19 +1,23 @@
 """
-    #
-    # Routines to find optimal compression parameters to satisfy certain quality thresholds
-    #
+
+    Routines to find optimal compression parameters that maximise
+    compression ratios while satisfying certain quality thresholds.
 
 """
+
+import json
 import logging
 from pathlib import Path
 from typing import Union, List, Tuple, Dict
 
 import numpy as np
 import xarray
+import yaml
 
-from .AnalysisOptions import AnalysisOptions, AnalysisParameters
-from .analyze_data_array import analyze_data_array, ANALYSIS_DIAGNOSTIC_METRICS, COMPRESSION_RATIO_LABEL
 from enstools.compression.compressor import drop_variables
+from enstools.io import read
+from .analysis_options import AnalysisOptions, AnalysisParameters
+from .analyze_data_array import analyze_data_array, ANALYSIS_DIAGNOSTIC_METRICS, COMPRESSION_RATIO_LABEL
 
 logger = logging.getLogger("enstools.compression.analysis")
 
@@ -47,8 +51,8 @@ def select_optimal_encoding(encodings: dict, metrics: dict, options: AnalysisOpt
 
     if COMPRESSION_RATIO_LABEL in options.thresholds:
         return select_optimal_encoding_based_on_quality_metrics(encodings, metrics)
-    else:
-        return select_optimal_encoding_based_on_compression_ratio(encodings, metrics)
+
+    return select_optimal_encoding_based_on_compression_ratio(encodings, metrics)
 
 
 def select_optimal_encoding_based_on_compression_ratio(encodings: dict, metrics: dict) -> Tuple[Dict, Dict]:
@@ -108,14 +112,12 @@ def find_encodings_for_all_combinations(dataset: xarray.Dataset, options: Analys
     :param options:
     :return:
     """
-    # Get list of variables and coordinates
-    variables = [v for v in dataset.data_vars]
-    coordinates = [v for v in dataset.coords]
-
-    compression_parameters = AnalysisParameters(options)
+    # Get lists of variables and coordinates
+    variables = list(dataset.data_vars)
+    coordinates = list(dataset.coords)
 
     # Get all possible combinations to analyze
-    combinations = compression_parameters.get_compressor_mode_combinations()
+    combinations = AnalysisParameters(options).get_compressor_mode_combinations()
 
     # Initialize dictionaries to save the results
     encodings = {}
@@ -138,8 +140,7 @@ def find_encodings_for_all_combinations(dataset: xarray.Dataset, options: Analys
                 combination_metrics[var] = {COMPRESSION_RATIO_LABEL: 1.0}
                 continue
             if not np.issubdtype(dataset[var].dtype, np.floating):
-                logger.debug(
-                    f"Variable {var} is not a float, it is {dataset[var].dtype}. Going with lossless.")
+                logger.debug("Variable %s is not a float, it is %s. Going with lossless.", var, dataset[var].dtype)
                 combination_encoding[var] = "lossless"
                 combination_metrics[var] = {COMPRESSION_RATIO_LABEL: 1.0}
                 continue
@@ -151,7 +152,11 @@ def find_encodings_for_all_combinations(dataset: xarray.Dataset, options: Analys
             combination_encoding[var] = variable_encoding
             combination_metrics[var] = variable_metrics
             # (dataset, variable_name, thresholds, compressor_name, mode)
-            logger.debug(f"{var} {variable_encoding}  CR:{variable_metrics[COMPRESSION_RATIO_LABEL]:.1f}")
+            logger.debug("%s %s  CR:%.1f",
+                         var,
+                         variable_encoding,
+                         variable_metrics[COMPRESSION_RATIO_LABEL],
+                         )
         encodings[combination] = combination_encoding
         metrics[combination] = combination_metrics
 
@@ -190,7 +195,6 @@ def analyze_files(file_paths: Union[Path, List[Path]],
         f"{constrains}\n"
     )
     print()
-    from enstools.io import read
 
     # Load dataset, possibly using a grid file
     if grid:
@@ -218,6 +222,17 @@ def analyze_dataset(dataset: xarray.Dataset,
                     fill_na: Union[float, bool] = False,
                     variables: List = None,
                     ):
+    """
+    Finds optimal compression parameters for a dataset to fulfill certain thresholds.
+
+    :param dataset:
+    :param constrains:
+    :param compressor:
+    :param mode:
+    :param fill_na:
+    :param variables:
+    :return:
+    """
     if variables is not None:
         dataset = drop_variables(dataset, variables)
 
@@ -237,20 +252,19 @@ def save_encoding(encoding: dict, output_file: Union[Path, str, None] = None, fi
     :return:
     """
     if file_format == "json":
-        import json
         if output_file:
-            print("Compression options saved in: %s " % output_file)
-            with open(output_file, "w") as outfile:
+            output_file = Path(output_file)
+            print(f"Compression options saved in: {output_file}")
+            with output_file.open("w", encoding="utf-8") as outfile:
                 json.dump(encoding, outfile, indent=4, sort_keys=True)
         else:
             print("Compression options:")
             print(json.dumps(encoding, indent=4, sort_keys=True))
     elif file_format == "yaml":
-        import yaml
         if output_file:
             output_file = Path(output_file)
-            print("Compression options saved in: %s " % output_file)
-            with open(output_file, "w") as outfile:
+            print(f"Compression options saved in: {output_file}")
+            with output_file.open("w", encoding="utf-8") as outfile:
                 yaml.dump(encoding, outfile, sort_keys=True)
         else:
             print("Compression options:")

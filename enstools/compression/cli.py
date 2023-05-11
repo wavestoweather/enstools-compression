@@ -1,9 +1,14 @@
 """
 Command Line Interface for different enstools-compression utilities
 """
+import argparse
+import sys
+from typing import List
+import glob
+from os.path import realpath
 
 # Few help messages
-compressor_help_text = """
+COMPRESSOR_HELP = """
 compress: 
 
 Tool to apply HDF5 compression filters to netCDF files. Compression specifications must follow the Compression Specification Format, more details below.
@@ -101,11 +106,12 @@ To do that, specify the number of nodes to use:
 ###############################
 # Compressor
 def add_subparser_compressor(subparsers):
-    import argparse
-
+    """
+    Function to add the compressor subparser
+    """
     subparser = subparsers.add_parser('compress', help='Compress help',
                                       formatter_class=argparse.RawDescriptionHelpFormatter,
-                                      description=compressor_help_text)
+                                      description=COMPRESSOR_HELP)
     subparser.add_argument("files", type=expand_paths, nargs='*',
                            help="Path to file/files that will be compressed."
                                 "Multiple files and regex patterns are allowed.")
@@ -131,7 +137,11 @@ def add_subparser_compressor(subparsers):
 
 
 def call_compressor(args):
-    from os.path import realpath
+    """
+    Function to be called with the compressor subparser
+    """
+    # pylint: disable=import-outside-toplevel
+
     # Read the output folder from the command line and assert that it exists and has write permissions.
     output = realpath(args.output)
 
@@ -167,7 +177,7 @@ def call_compressor(args):
 ###############################
 # Analyzer
 
-analyzer_help_text = """
+ANALYZE_HELP = """
 analyze: 
 
 Tool to find which compression specifications maximise the compression ratio while maintaining certain quality metrics provided by the argument **constrains**.
@@ -207,9 +217,11 @@ The constrain specification must be provided in the following format:
 
 
 def add_subparser_analyzer(subparsers):
-    import argparse
+    """
+    Function to add the analyzer subparser
+    """
 
-    subparser = subparsers.add_parser('analyze', help=analyzer_help_text,
+    subparser = subparsers.add_parser('analyze', help=ANALYZE_HELP,
                                       formatter_class=argparse.RawDescriptionHelpFormatter)
 
     subparser.add_argument("--constrains", dest="constrains",
@@ -251,6 +263,11 @@ def add_subparser_analyzer(subparsers):
 
 
 def call_analyzer(args):
+    """
+    Function to be called with the analyzer subparser
+    """
+    # pylint: disable=import-outside-toplevel
+
     file_paths = args.files
     grid = args.grid
     # Compression options
@@ -292,7 +309,7 @@ def call_analyzer(args):
 ###############################
 # Find significand bits
 
-significant_bits_help_text = """
+SIGNIFICANT_HELP = """
 significand:
 
 Tool to find the ammount of significand bits in a data file following the approach described in Klöwer et al 2021 _[1].
@@ -304,9 +321,11 @@ Nat Comput Sci 1, 713-724 (2021). https://doi.org/10.1038/s43588-021-00156-2
 
 
 def add_subparser_significand(subparsers):
-    import argparse
+    """
+    Function to add the significand subparser
+    """
 
-    subparser = subparsers.add_parser('significand', help=significant_bits_help_text,
+    subparser = subparsers.add_parser('significand', help=SIGNIFICANT_HELP,
                                       formatter_class=argparse.RawDescriptionHelpFormatter)
     subparser.add_argument("--output", "-o", dest="output", default=None, type=str,
                            help="Path to the file where the configuration will be saved."
@@ -319,6 +338,11 @@ def add_subparser_significand(subparsers):
 
 
 def call_significand(args):
+    """
+    Function to be called with the significand subparser
+    """
+    # pylint: disable=import-outside-toplevel
+
     from enstools.compression.api import analyze_file_significant_bits
     file_paths = args.files
 
@@ -328,7 +352,7 @@ def call_significand(args):
 
 ###############################
 # Evaluator
-evaluate_help_text = """
+EVALUATE_HELP = """
 evaluate:
 
 Tool to quickly compare two datasets, mainly though to compare a compressed dataset with its reference.
@@ -337,8 +361,11 @@ Tool to quickly compare two datasets, mainly though to compare a compressed data
 
 
 def add_subparser_evaluator(subparsers):
-    import argparse
-    subparser = subparsers.add_parser('evaluate', help=evaluate_help_text,
+    """
+    Function to add the evaluator subparser
+    """
+
+    subparser = subparsers.add_parser('evaluate', help=EVALUATE_HELP,
                                       formatter_class=argparse.RawDescriptionHelpFormatter)
     subparser.add_argument("--reference", "-r", dest="reference_file", default=None, type=str,
                            help="Path to reference file. Default=%(default)s", required=True)
@@ -352,6 +379,11 @@ def add_subparser_evaluator(subparsers):
 
 
 def call_evaluator(args):
+    """
+    Function to be called with the evaluator subparser
+    """
+    # pylint: disable=import-outside-toplevel
+
     reference_file_path = args.reference_file
     target_file_path = args.target_file
     plot = args.plot
@@ -363,7 +395,7 @@ def call_evaluator(args):
 
 ###############################
 # Pruner
-pruner_help_text = """
+PRUNER_HELP = """
 pruner:
 
 Tool to prune a file up to a certain number of significant bits.
@@ -372,8 +404,11 @@ Tool to prune a file up to a certain number of significant bits.
 
 
 def add_subparser_pruner(subparsers):
-    import argparse
-    subparser = subparsers.add_parser('prune', help=pruner_help_text,
+    """
+    Function to add the pruner subparser
+    """
+
+    subparser = subparsers.add_parser('prune', help=PRUNER_HELP,
                                       formatter_class=argparse.RawDescriptionHelpFormatter)
     subparser.add_argument("files", type=str, nargs="+",
                            help='List of files to compress. Multiple files and regex patterns are allowed.')
@@ -382,6 +417,10 @@ def add_subparser_pruner(subparsers):
 
 
 def call_pruner(args):
+    """
+    Function to be called with the pruner subparser
+    """
+    # pylint: disable=import-outside-toplevel
     from enstools.compression.pruner import pruner
     file_paths = args.files
     output = args.output
@@ -390,7 +429,10 @@ def call_pruner(args):
 
 
 def add_subparser_load_plugins(subparsers):
-    import argparse
+    """
+    Function to add the load_plugins subparser
+    """
+
     load_subparser = subparsers.add_parser('load-plugins',
                                            help="Add the HDF5PLUGINPATH path to the environment",
                                            formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -401,11 +443,19 @@ def add_subparser_load_plugins(subparsers):
 
 
 def call_load_plugins():
+    """
+    Function to be called with the load_plugins subparser
+    """
+    # pylint: disable=import-outside-toplevel
     from enstools.compression.plugins import load_plugins
     load_plugins()
 
 
 def call_unload_plugins():
+    """
+    Function to be called with the unload_plugins subparser
+    """
+    # pylint: disable=import-outside-toplevel
     from enstools.compression.plugins import unload_plugins
     unload_plugins()
 
@@ -433,22 +483,24 @@ def add_subparsers(parser):
     add_subparser_load_plugins(subparsers)
 
 
-def expand_paths(string: str):
-    import glob
-    from os.path import realpath
+def expand_paths(string: str) -> List[str]:
     """
-    Small function to expand the file paths
+    Expand paths using glob.
     """
+
     files = glob.glob(string)
     return [realpath(f) for f in files]
 
 
 ###############################
 
-def get_parser():
-    # Create parser
-    import argparse
+def get_parser() -> argparse.ArgumentParser:
+    """
+    Create a parser object and return it
+    Returns
+    -------
 
+    """
     # Create the top-level parser
     parser = argparse.ArgumentParser()
     parser.set_defaults(which=None)
@@ -474,7 +526,7 @@ def main():
     # Process options according to the selected option
     if args.which is None:
         parser.print_help()
-        exit(0)
+        sys.exit(1)
     elif args.which == "compressor":
         call_compressor(args)
     elif args.which == "analyzer":

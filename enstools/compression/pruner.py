@@ -1,13 +1,21 @@
-import xarray
+"""
+Functions to prune numpy arrays to a certain number of significant bits.
+"""
+
+from os import access, W_OK
+from os.path import isdir
+from pathlib import Path
+from typing import Union, List
+
 import numpy as np
 import xarray
 
+from enstools.compression.compressor import destination_path
+from enstools.io import read, write
+from enstools.io.paths import clean_paths
 from .compressor import drop_variables
 from .significant_bits import get_uint_type_by_bit_length, single_bit_mask, apply_mask, \
     mask_generator
-from enstools.io.paths import clean_paths
-from typing import Union, List
-from pathlib import Path
 
 
 def prune_numpy_array(array: np.ndarray, significant_bits=0, round_to_nearest=True):
@@ -55,9 +63,6 @@ def pruner(file_paths: Union[Path, List[Path], str, List[str]],
     Apply bit prunning to a list of files.
 
     """
-    from enstools.compression.compressor import destination_path
-    from os.path import isdir
-    from os import access, W_OK
 
     file_paths = clean_paths(file_paths)
     output = Path(output).resolve()
@@ -66,7 +71,8 @@ def pruner(file_paths: Union[Path, List[Path], str, List[str]],
     # Some assertions first to prevent wrong usage.
     if len(file_paths) == 0:
         raise AssertionError("file_paths can't be an empty list")
-    elif len(file_paths) == 1:
+
+    if len(file_paths) == 1:
         file_path = file_paths[0]
         new_file_path = destination_path(file_path, output) if output.is_dir() else output
         prune_file(file_path, new_file_path, significant_bit_info=significant_bit_info,
@@ -85,7 +91,7 @@ def prune_file(file_path, destination, significant_bit_info=None, variables_to_k
     """
     Apply bit pruning to a file. 
     """
-    from enstools.io import read, write
+
     print(f"{file_path} -> {destination}")
     dataset = read(file_path)
 
@@ -93,6 +99,7 @@ def prune_file(file_path, destination, significant_bit_info=None, variables_to_k
         dataset = drop_variables(dataset, variables_to_keep)
 
     if significant_bit_info is None:
+        # pylint: disable=import-outside-toplevel
         from enstools.compression.significant_bits import analyze_file_significant_bits
         significant_bits_dictionary = analyze_file_significant_bits(file_path)
     else:
