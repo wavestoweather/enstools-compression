@@ -1,3 +1,11 @@
+"""
+This module provides a convenient and centralized access point for various functions
+from different modules.
+
+By using this API, users can easily access and utilize these functions without needing
+to import each module individually.
+"""
+# pylint: disable=unused-import
 from .pruner import pruner
 from .compressor import compress
 from .analyzer.analyzer import analyze_files, analyze_dataset

@@ -18,7 +18,6 @@ class Emulator(ABC):
     @abstractmethod
     def __init__(self, specification: Encoding, uncompressed_data: np.ndarray):
         """Init method requires certain parameters"""
-        ...
 
     @abstractmethod
     def compress_and_decompress(self, uncompressed_data: np.array) -> np.array:

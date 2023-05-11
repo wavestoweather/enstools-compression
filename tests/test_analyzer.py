@@ -40,7 +40,7 @@ class TestAnalyzer(TestClass):
         This tests checks that we can find compression parameters to fulfill a certain compression ratio.
         """
         from enstools.compression.api import analyze_files
-        from enstools.compression.analyzer.AnalysisOptions import from_csv_to_dict
+        from enstools.compression.analyzer.analysis_options import from_csv_to_dict
         # The resulting compression ratio should be within this tolerance.
         TOLERANCE = 1
         cr_label = "compression_ratio"

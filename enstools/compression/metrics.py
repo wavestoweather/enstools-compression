@@ -1,24 +1,37 @@
+"""
+This module provides tools to compute metrics on two datasets, typically a reference dataset
+and a target dataset, where both datasets have the same variables and dimensions.
+"""
+
+from inspect import getmembers, isfunction, signature
+from os import makedirs
+from os.path import isdir, join
 from os.path import isfile
 from typing import Callable, Union
-from enstools.core.errors import EnstoolsError
 
 import numpy as np
 import xarray
 
+import enstools.scores
+from enstools.core.errors import EnstoolsError
 from enstools.io import read
 
 
 def get_matching_scores(arguments: list) -> dict:
     """
     Returns a dictionary of functions that match with the provided arguments.
+
+    Args:
+        arguments (list): A list of argument names to match against function signatures.
+
+    Returns:
+        dict: A dictionary with function names as keys and function objects as values.
     """
-    import enstools.scores
-    from inspect import getmembers, isfunction, signature
     functions_list = getmembers(enstools.scores, isfunction)
 
     def check_signature(function: Callable):
         sig = signature(function)
-        return all([arg in sig.parameters for arg in arguments])
+        return all(arg in sig.parameters for arg in arguments)
 
     # Keep only the functions that match the desired
     return {name: fun for name, fun in functions_list if check_signature(fun)}
@@ -26,23 +39,28 @@ def get_matching_scores(arguments: list) -> dict:
 
 # Workaround to update the list of available metrics when the metrics are used,
 # not only when the module is imported.
-class AvailableMetrics:
-    @property
-    def get(self):
-        return get_matching_scores(arguments=["reference", "target"])
 
-available_metrics = AvailableMetrics()
+def get_available_metrics() -> dict:
+    """
+    A function to get the list of available metrics and update it when needed.
+    """
+    return get_matching_scores(arguments=["reference", "target"])
 
 
 class DataArrayMetrics:
     """
-    First object oriented approach to avoid redundant computation of metrics. (i.e. don't compute mse several times)
+    First object-oriented approach to avoid redundant computation of metrics
+    (i.e., don't compute MSE several times).
     """
+
     difference: np.ndarray
     available_metrics: list
 
     def __init__(self, reference: Union[xarray.DataArray, np.ndarray],
                  target: Union[xarray.DataArray, np.ndarray]) -> None:
+        """
+        Initialize a new DataArrayMetrics object.
+        """
         # Setting reference and reference_values  depending on the type of the input
         if isinstance(reference, np.ndarray):
             self.reference = xarray.DataArray(reference)
@@ -61,89 +79,92 @@ class DataArrayMetrics:
         self.metric_values = {}
 
         # Add the list of available metrics from metric_definitions
-        self.available_metrics = list(available_metrics.get.keys())
+        self.available_metrics = list(get_available_metrics().keys())
 
     def __getitem__(self, name: str) -> xarray.DataArray:
+        """
+        Return the metric value if already computed or compute and return the metric value.
+        """
         # Look if the metric has already been computed.
         # If its true, just return it, otherwise compute it and then return it.
         if name not in self.metric_values:
             self.metric_values[name] = self.compute_metric(name)
         return self.metric_values[name]
 
-    def fix_nan(self):
-        # FIXME: That looks a bit dangerous.
+    def fix_nan(self, fill_value: float = -1000):
+        """
+        Replace NaNs in the reference and target arrays with a fill value.
+        """
         # Replace NaNs with a fill value.
-        fill_value = -10000.
         if np.isnan(self.reference.values).any():
             self.reference.values[np.isnan(self.reference.values)] = fill_value
         if np.isnan(self.target.values).any():
             self.target.values[np.isnan(self.target.values)] = fill_value
 
     def compute_metric(self, method: str) -> xarray.DataArray:
+        """
+        Compute the specified metric for the reference and target arrays.
+        """
         if method not in self.available_metrics:
             raise EnstoolsError(f"Metric {method!r} not available.")
-        return available_metrics.get[method](self.reference, self.target)
+        return get_available_metrics()[method](self.reference, self.target)
 
     def plot_summary(self, output_folder: str = "report"):
-        # TODO: This is not the proper place to put this code. Move it somewhere else.
+        # pylint: disable=import-outside-toplevel
+        """
+        Generate a summary plot for the reference, target, and their differences.
+        """
         import matplotlib.pyplot as plt
         import matplotlib as mpl
 
-        from os.path import isdir, join
-        from os import makedirs
-
-        # Get dimensions  
+        # TODO: This is not the proper place to put this code. Move it somewhere else.
+        # Get dimensions
         shape = self.reference.shape
         # Get variable name from DataArray object
         variable_name = self.reference.name
 
         if len(shape) == 4:
-            y, z, x, y = shape
-            sl = (0, int(z / 2), slice(None), slice(None))
+            _, z_dim, _, _ = shape
+            slice_indices = (0, int(z_dim / 2), slice(None), slice(None))
         elif len(shape) == 3:
-            sl = 0, slice(None), slice(None)
+            slice_indices = 0, slice(None), slice(None)
         elif len(shape) == 2:
-            sl = slice(None), slice(None)
+            slice_indices = slice(None), slice(None)
         elif len(shape) == 1:
             return
         else:
             raise NotImplementedError
 
-        plot_num = 4
-        reference_data = self.reference[sl]
-        target_data = self.target[sl]
+        reference_data = self.reference[slice_indices]
+        target_data = self.target[slice_indices]
 
-        var_range = np.max(reference_data)-np.min(reference_data)
+        var_range = np.max(reference_data) - np.min(reference_data)
 
         # Prepare a plot of an intermediate level
         plt.figure(figsize=(9, 9))
 
         # Plot reference
-        plt.subplot(int(f"{plot_num}11"))
+        plt.subplot(int("411"))
         plt.imshow(reference_data)
         plt.colorbar()
         # Plot comparison target
-        plt.subplot(int(f"{plot_num}12"))
+        plt.subplot(int("412"))
         plt.imshow(target_data)
         plt.colorbar()
 
         # Plot differences
-        plt.subplot(int(f"{plot_num}13"))
+        plt.subplot(int("413"))
         color_levels = 7
         cmap = plt.cm.seismic  # define the colormap
         # extract all colors from the colormap
         cmaplist = [cmap(i) for i in range(cmap.N)]
         # Generate new colormap with only few levels
         cmap = mpl.colors.LinearSegmentedColormap.from_list('Custom cmap', cmaplist, color_levels)
-        difference = self.target[sl]-self.reference[sl]
-        _min = np.min(difference)
-        _max = np.max(difference)
-        __ = max(abs(_min), _max)
-        factor = var_range / __
-        vmin = -__
-        vmax = __
-        # vmin =-iqr/10
-        # vmax = iqr/10
+        difference = self.target[slice_indices] - self.reference[slice_indices]
+        max_abs_diff = max(abs(np.min(difference)), np.max(difference))
+        factor = var_range / max_abs_diff
+        vmin = -max_abs_diff
+        vmax = max_abs_diff
         plt.imshow(difference, vmin=vmin, vmax=vmax, cmap=cmap)
         plt.title(f"The difference range is {factor:.1f} smaller than the InterQuartileRange")
         cbar = plt.colorbar()
@@ -151,11 +172,11 @@ class DataArrayMetrics:
 
         # Put something related with the metrics
         fig = plt.gcf()
-        ax = fig.add_subplot(414, polar=True)
+        axis = fig.add_subplot(414, polar=True)
 
         selected_metrics = ["correlation_I", "ssim_I", "nrmse_I"]
         selected_values = np.array([self[m] for m in selected_metrics])
-        make_radar_chart(variable_name, selected_metrics, selected_values, ax)
+        make_radar_chart(variable_name, selected_metrics, selected_values, axis)
         if not isdir(output_folder):
             makedirs(output_folder)
         plt.tight_layout()
@@ -167,7 +188,14 @@ class DataArrayMetrics:
 
 
 class DatasetMetrics:
+    """
+    A class for computing metrics and generating plots for given reference and target datasets.
+    """
+
     def __init__(self, reference: Union[str, xarray.Dataset], target: Union[str, xarray.Dataset]) -> None:
+        """
+        Initialize a new DatasetMetrics object.
+        """
         # Check that files exist and save them
 
         if not isinstance(reference, xarray.Dataset):
@@ -192,7 +220,7 @@ class DatasetMetrics:
             self.target = target
 
         # Get variables
-        self.coords = [v for v in self.reference.coords]
+        self.coords = list(self.reference.coords)
         self.variables = [v for v in self.reference.variables if v not in self.coords]
 
         # Consistency check
@@ -203,20 +231,28 @@ class DatasetMetrics:
         self.initialize_metrics()
 
     def check_consistency(self) -> None:
+        """
+        Check if the reference and target datasets are consistent.
+        """
         # Check that files are meant to represent the same things
         assert set(self.reference.variables) == set(self.target.variables)
         assert set(self.reference.coords) == set(self.target.coords)
 
     def initialize_metrics(self) -> None:
+        """
+        Initialize DataArrayMetrics objects for each variable in the datasets.
+        """
         for variable in self.variables:
             self.metrics[variable] = DataArrayMetrics(self.reference[variable], self.target[variable])
-        pass
 
     def __getitem__(self, name: str) -> DataArrayMetrics:
         assert name in self.variables, f"The provided variable name {name} does not exist in this dataset."
         return self.metrics[name]
 
     def make_plots(self):
+        """
+        Generate plots for all variables in the datasets.
+        """
         print("Producing plots:")
         for index, variable in enumerate(self.variables):
             print(f"\r{index + 1}/{len(self.variables)} {variable:30} ", end="")
@@ -225,7 +261,7 @@ class DatasetMetrics:
 
     def create_gradients(self):
         """
-        Create first order gradients
+        Create first-order gradients for all variables in the datasets.
         """
         for variable in self.variables:
             ref_grad = array_gradient(self[variable].reference)
@@ -240,7 +276,7 @@ class DatasetMetrics:
 
     def create_second_order_gradients(self):
         """
-        Create first order gradients
+        Create second-order gradients for all gradient variables in the datasets.
         """
         for variable in [v for v in self.variables if v.count("_gradient")]:
             ref_grad = array_gradient(self[variable].reference)
@@ -260,8 +296,13 @@ class DatasetMetrics:
                f"{[v for v in self.reference.variables if v not in self.reference.coords]}"
 
 
-def make_radar_chart(name, attribute_labels, stats, ax):
+def make_radar_chart(name, attribute_labels, stats, axis):
+    # pylint: disable=import-outside-toplevel
+    """
+    Create a radar chart for the given attributes and their values.
+    """
     import matplotlib.pyplot as plt
+
     markers = [0, 3, 6, 9, 12]
     # str_markers = ["0", "3", "6", "9", "12"]
 
@@ -271,22 +312,19 @@ def make_radar_chart(name, attribute_labels, stats, ax):
     stats = np.concatenate((stats, [stats[0]]))
     angles = np.concatenate((angles, [angles[0]]))
 
-    ax.plot(angles, stats, 'o-', linewidth=.5, alpha=1, markersize=5)
-    ax.fill(angles, stats, alpha=0.25)
-    ax.set_thetagrids(angles[:-1] * 180 / np.pi, labels)
+    axis.plot(angles, stats, 'o-', linewidth=.5, alpha=1, markersize=5)
+    axis.fill(angles, stats, alpha=0.25)
+    axis.set_thetagrids(angles[:-1] * 180 / np.pi, labels)
 
-    ax.plot(angles, [5, 3, 2, 5], ":", color="r", alpha=.5)
+    axis.plot(angles, [5, 3, 2, 5], ":", color="r", alpha=.5)
     plt.yticks(markers)
-    ax.set_title(name)
-    ax.grid(True)
+    axis.set_title(name)
+    axis.grid(True)
 
 
 def array_gradient(data_array: xarray.DataArray) -> Union[None, xarray.DataArray]:
     """
-    Takes one Data Array and returns the gradient.
-    In case of multidimensional data, it returns the magnitude of the gradient.
-
-    Maybe it shouldn't be in this file.
+    Calculate the gradient of a DataArray. For multidimensional data, return the magnitude of the gradient.
     """
     dimensions = len(data_array.shape)
     if dimensions == 1:

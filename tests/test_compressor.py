@@ -39,11 +39,6 @@ class TestCompressor(TestClass):
         compression = yaml_file_path
         wrapper(self, compression=compression)
 
-    # TODO: Is it something worth having?
-    def test_compress_auto(self):
-        compression = "auto"
-        wrapper(self, compression=compression)
-
     def test_compress_ratios_lossy(self):
         from enstools.compression.api import compress
         # Check that compression works when specifying compression = lossy:sz
@@ -112,7 +107,8 @@ class TestCompressor(TestClass):
         from enstools.compression.api import compress
         # Check that the compression without specifying compression parameters works
         data_path = self.input_directory_path / "dataset_3D.nc"
-        compress(data_path, self.output_directory_path / "dummy.nc", compression="lossless", show_compression_ratios=True)
+        compress(data_path, self.output_directory_path / "dummy.nc", compression="lossless",
+                 show_compression_ratios=True)
 
     def test_compress_with_emulate(self):
         from enstools.compression.api import compress
@@ -127,9 +123,3 @@ class TestCompressor(TestClass):
         datasets = ["dataset_%iD.nc" % dimension for dimension in range(1, 4)]
         data_paths = [self.input_directory_path / ds for ds in datasets]
         compress(data_paths, self.output_directory_path, compression="lossless", variables_to_keep=["temperature"])
-
-
-
-
-
-

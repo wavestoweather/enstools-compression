@@ -5,16 +5,22 @@
 
 """
 import logging
-import time
-from functools import partial
 from os import rename, access, W_OK
-from os.path import isfile, isdir
-from typing import Union, List
-import xarray
+from os.path import isdir
+from os.path import splitext
 from pathlib import Path
-from enstools.io.paths import clean_paths
+from pprint import pprint
+from typing import Union, List
+
+import xarray
+from dask.distributed import performance_report
 
 from enstools.compression.emulation import emulate_compression_on_dataset
+from enstools.core import init_cluster
+from enstools.io import read, write
+from enstools.io.file_type import get_file_type
+from enstools.io.paths import clean_paths
+from .size_metrics import compression_ratio
 
 
 def drop_variables(dataset: xarray.Dataset, variables_to_keep: List[str]) -> xarray.Dataset:
@@ -23,13 +29,24 @@ def drop_variables(dataset: xarray.Dataset, variables_to_keep: List[str]) -> xar
     Keeps the coordinates.
     """
     # Drop the undesired variables and keep the coordinates
-    coordinates = [v for v in dataset.coords]
+    coordinates = list(dataset.coords)
     variables = [v for v in dataset.variables if v not in coordinates]
     variables_to_drop = [v for v in variables if v not in variables_to_keep]
     return dataset.drop_vars(variables_to_drop)
 
 
 def fix_filename(file_name: str) -> str:
+    """
+    Replace grib2 or grb file specification with .nc
+    Parameters
+    ----------
+    file_name
+
+    Returns
+    -------
+    fixed_file_name
+
+    """
     cases = [".grib2", ".grb"]
     for case in cases:
         file_name = file_name.replace(case, ".nc")
@@ -39,7 +56,7 @@ def fix_filename(file_name: str) -> str:
 def transfer(file_paths: Union[List[str], str, Path, List[Path]],
              output: Path,
              compression: str = "lossless",
-             variables_to_keep: List[str] = [],
+             variables_to_keep: List[str] = None,
              emulate: bool = False,
              fill_na: Union[float, bool] = False,
              ) -> None:
@@ -68,7 +85,8 @@ def transfer(file_paths: Union[List[str], str, Path, List[Path]],
     # Some assertions first to prevent wrong usage.
     if len(file_paths) == 0:
         raise AssertionError("file_paths can't be an empty list")
-    elif len(file_paths) == 1:
+
+    if len(file_paths) == 1:
         file_path = file_paths[0]
         new_file_path = destination_path(file_path, output) if isdir(output) else output
         transfer_file(file_path, new_file_path, compression,
@@ -97,6 +115,24 @@ def transfer_multiple_files(
         emulate: bool = False,
         fill_na: Union[float, bool] = False
 ) -> None:
+    """
+        This function will copy multiple files while optionally applying compression.
+
+    Parameters
+    ----------
+    file_paths
+    output
+    compression
+    variables_to_keep
+    emulate
+    fill_na
+
+    Returns
+    -------
+
+    """
+    # pylint: disable=import-outside-toplevel
+
     output = Path(output)
     file_paths = clean_paths(paths=file_paths)
 
@@ -152,14 +188,14 @@ def transfer_file(origin: Path, destination: Path, compression: str, variables_t
     compression: string
             compression specification or path to json configuration file
     """
-    from enstools.io import read, write
+
     dataset = read(origin, decode_times=False)
     if variables_to_keep is not None:
         dataset = drop_variables(dataset, variables_to_keep)
 
     if fill_na is not False:
         dataset = dataset.fillna(fill_na)
-        logging.info(f"Filling missing values with {fill_na!r}")
+        logging.info("Filling missing values with %s", fill_na)
 
     # In case we are using emulate, we compress and decompress the dataset using LibPressio and output
     # the file without compression only to measure the impact compression would have.
@@ -167,8 +203,8 @@ def transfer_file(origin: Path, destination: Path, compression: str, variables_t
         dataset, _ = emulate_compression_on_dataset(dataset, compression)
         return write(dataset, destination, file_format="NC", compute=compute, compression=None,
                      format="NETCDF4_CLASSIC", engine="netcdf4")
-    else:
-        return write(dataset, destination, file_format="NC", compression=compression, compute=compute)
+
+    return write(dataset, destination, file_format="NC", compression=compression, compute=compute)
 
 
 def destination_path(origin_path: Path, destination_folder: Path):
@@ -186,8 +222,6 @@ def destination_path(origin_path: Path, destination_folder: Path):
 
     Returns the path to the new file that will be placed in the destination folder.
     """
-    from os.path import splitext
-    from enstools.io.file_type import get_file_type
 
     file_name = origin_path.name
 
@@ -238,22 +272,8 @@ def compress(
     """
     file_paths = clean_paths(file_paths)
     output = Path(output)
-    # In case of using automatic compression option, call here get_compression_parameters()
-    if compression == "auto":
-        from .analyzer import analyze_files
-        if output.is_dir():
-            compression_parameters_path = output / "compression_parameters.yaml"
-        else:
-            compression_parameters_path = output.parent.resolve() / "compression_parameters.yaml"
-        # By using thresholds = None we will be using the default values.
-        analyze_files(file_paths=file_paths, output_file=compression_parameters_path)
-        # Now lets continue setting compression = compression_parameters_path
-        compression = compression_parameters_path
-
     # In case of wanting to use additional nodes
     if nodes > 0:
-        from enstools.core import init_cluster
-        from dask.distributed import performance_report
         with init_cluster(nodes, extend=True) as client:
             client.wait_for_workers(nodes)
             client.get_versions(check=True)
@@ -278,11 +298,19 @@ def compress(
         check_compression_ratios(file_paths, output)
 
 
-def check_compression_ratios(file_paths: List[Path], output: Path):
+def check_compression_ratios(file_paths: List[Path], output: Path) -> None:
+    """
+    Utility to compute and print the compression ratios.
+    Parameters
+    ----------
+    file_paths
+    output
+
+    Returns
+    -------
+
+    """
     # Compute compression ratios
-    from .size_metrics import compression_ratio
-    from os.path import join, basename
-    from pprint import pprint
     compression_ratios = {}
 
     for file_path in file_paths:
@@ -292,7 +320,9 @@ def check_compression_ratios(file_paths: List[Path], output: Path):
             new_file_path = output / file_name
         elif output.is_file():
             new_file_path = output
-        CR = compression_ratio(file_path.as_posix(), new_file_path.as_posix())
-        compression_ratios[file_name] = CR
+        else:
+            raise AssertionError(f"Output {output} is neither a file nor a folder!")
+        file_compression_ratio = compression_ratio(file_path.as_posix(), new_file_path.as_posix())
+        compression_ratios[file_name] = file_compression_ratio
     print("Compression ratios after compression:")
     pprint(compression_ratios)

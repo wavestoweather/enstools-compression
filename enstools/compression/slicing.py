@@ -3,7 +3,6 @@ This file contains classes and methods to divide a multi dimensional slice in di
 chunk size or the number of desired parts.
 """
 
-
 import logging
 from typing import List, Tuple
 
@@ -13,7 +12,7 @@ import numpy as np
 
 def split_array(array: np.ndarray, parts: int):
     """
-    Splits the given array into a specified number of parts. 
+    Splits the given array into a specified number of parts.
     The function returns a list of chunks, where each chunk is a numpy array.
 
     :param array: A numpy array to be split
@@ -34,23 +33,29 @@ def split_array(array: np.ndarray, parts: int):
     # Sort the possible chunk sizes in ascending order of the sum of the squares of their dimensions
     possible_chunk_sizes.sort(key=lambda x: np.sum(np.array(x) ** 2))  # type: ignore
     if not possible_chunk_sizes:
-        logging.warning(f"Could not divide the domain in {parts} parts. Trying with parts={parts - 1}.")
+        logging.warning("Could not divide the domain in %d parts. Trying with parts=%d.", parts, parts - 1)
         return split_array(array=array, parts=parts - 1)
-    chunk_size = possible_chunk_sizes[0]
+    selected_chunk_size = possible_chunk_sizes[0]
 
     chunks = []
     # Get the number of chunks for the first possible chunk size
-    n_chunks = [shape[i] // chunk_size[i] + int(shape[i] % chunk_size[i] != 0) for i in range(len(shape))]
-    indexes = [range(n_chunks[i]) for i in range(len(shape))]
+    num_chunks = [shape[i] // selected_chunk_size[i] + int(shape[i] % selected_chunk_size[i] != 0) for i in
+                  range(len(shape))]
+    indexes = [range(num_chunks[i]) for i in range(len(shape))]
     # Iterate over the chunks and append the corresponding slice of the array to the chunks list
     for indx in product(*indexes):
-        sl = tuple(
-            slice(chunk_size[i] * indx[i], min(chunk_size[i] * (indx[i] + 1), shape[i])) for i in range(len(shape)))
-        chunks.append(array[sl])
+        current_slice = tuple(
+            slice(selected_chunk_size[i] * indx[i], min(selected_chunk_size[i] * (indx[i] + 1), shape[i])) for i in
+            range(len(shape)))
+        chunks.append(array[current_slice])
     return chunks
 
 
 class MultiDimensionalSlice:
+    """
+    A class representing a multi-dimensional slice.
+    """
+
     def __init__(self, indices: Tuple[int, ...], slices: Tuple[slice, ...] = (slice(0, 0, 0),)):
         """
         Initialize the MultiDimensionalSlice object with indices and slice
@@ -72,12 +77,16 @@ class MultiDimensionalSlice:
         Return the size of the slice
         """
         size = 1
-        for s in self.slices:
-            size *= s.stop - s.start
+        for current_slice in self.slices:
+            size *= current_slice.stop - current_slice.start
         return size
 
 
 class MultiDimensionalSliceCollection:
+    """
+    A class representing a collection of multi-dimensional slices.
+    """
+
     def __init__(self, *, objects_array: np.ndarray = None, shape: Tuple[int, ...] = None,
                  chunk_sizes: Tuple[int, ...] = None):
         """
@@ -131,64 +140,75 @@ class MultiDimensionalSliceCollection:
         MultiDimensionalSliceCollection
 
         """
-        cs = chunk_size
         collection_shape = tuple(
-            [shape[i] // cs[i] + int(shape[i] % cs[i] != 0) for i in range(len(shape))])
-        # Calculates the shape of the collection of chunks, by dividing the shape of the array by the size of the chunks 
-        # and adding 1 if there is a remainder 
+            shape[i] // chunk_size[i] + int(shape[i] % chunk_size[i] != 0) for i in range(len(shape)))
         objects = np.empty(collection_shape, dtype=MultiDimensionalSlice)
-        # Initializes an empty array of the same shape as the collection with the dtype of MyObject
-        n_chunks = [shape[i] // cs[i] + int(shape[i] % cs[i] != 0) for i in range(len(shape))]
-        # Calculates the number of chunks in each dimension
-        indexes = [range(n_chunks[i]) for i in range(len(shape))]
-        # Create the indexes to iterate over the collection
+        num_chunks = [shape[i] // chunk_size[i] + int(shape[i] % chunk_size[i] != 0) for i in range(len(shape))]
+        indexes = [range(num_chunks[i]) for i in range(len(shape))]
 
         for indx in product(*indexes):
-            sl = tuple(slice(cs[i] * indx[i], min(cs[i] * (indx[i] + 1), shape[i])) for i in range(len(shape)))
-            # for each index of the collection create a slice that corresponds
-            # to the portion of the array contained in the chunk
-            objects[indx] = MultiDimensionalSlice(indices=indx, slices=sl)
-            # assigns the created object to the corresponding position in the collection array
+            current_slice = tuple(
+                slice(chunk_size[i] * indx[i], min(chunk_size[i] * (indx[i] + 1), shape[i])) for i in range(len(shape)))
+            objects[indx] = MultiDimensionalSlice(indices=indx, slices=current_slice)
         self.__initialize_from_array(objects_array=objects)
 
     def __getitem__(self, args):
-        return self.objects[args]  # returns the object at the specified position of the collection array
+        return self.objects[args]
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({self.collection_shape})"  # returns a string representation of the class
+        return f"{self.__class__.__name__}({self.collection_shape})"
 
     @property
     def slice(self) -> Tuple[slice, ...]:
+        """
+        Calculate the total slice that covers all the MultiDimensionalSlice objects in the collection.
+
+        Returns:
+            Tuple[slice, ...]: A tuple of slice objects representing the total slice.
+        """
+
         total_slice = tuple(slice(None) for _ in self.collection_shape)
         for obj in self.objects.flat:
-            for i, s in enumerate(obj.slices):
+            for i, current_slice in enumerate(obj.slices):
                 if total_slice[i].start is None:
-                    total_slice = total_slice[:i] + (s,) + total_slice[i + 1:]
+                    total_slice = total_slice[:i] + (current_slice,) + total_slice[i + 1:]
                 else:
-                    if s.start < total_slice[i].start:
+                    if current_slice.start < total_slice[i].start:
                         total_slice = total_slice[:i] + (
-                        slice(s.start, total_slice[i].stop, total_slice[i].step),) + total_slice[i + 1:]
-                    if s.stop > total_slice[i].stop:
+                            slice(current_slice.start, total_slice[i].stop, total_slice[i].step),) + total_slice[i + 1:]
+                    if current_slice.stop > total_slice[i].stop:
                         total_slice = total_slice[:i] + (
-                        slice(total_slice[i].start, s.stop, total_slice[i].step),) + total_slice[i + 1:]
+                            slice(total_slice[i].start, current_slice.stop, total_slice[i].step),) + total_slice[i + 1:]
         return total_slice
 
     def split(self, parts: int) -> List['MultiDimensionalSliceCollection']:
         """
-        Divide the MultiDimensionalSliceCollection into a different parts of similar size
+        Divide the MultiDimensionalSliceCollection into different parts of similar size.
 
         Args:
-            parts (int): Number of parts to divide the group
+            parts (int): Number of parts to divide the group.
 
         Returns:
-            _type_: _description_
+            list: A list of MultiDimensionalSliceCollection objects representing the divided parts.
         """
         array_parts = split_array(self.objects, parts)
         return [MultiDimensionalSliceCollection(objects_array=p) for p in array_parts]
 
     @property
     def size(self) -> int:
-        return sum([ob.size for ob in self.objects.ravel()])
+        """
+        Calculate the total size of the MultiDimensionalSliceCollection.
+
+        Returns:
+            int: The total size of the collection.
+        """
+        return sum(ob.size for ob in self.objects.ravel())
 
     def __len__(self) -> int:
+        """
+        Calculate the total number of objects in the MultiDimensionalSliceCollection.
+
+        Returns:
+            int: The total number of objects in the collection.
+        """
         return self.objects.size

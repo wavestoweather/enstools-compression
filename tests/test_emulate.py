@@ -1,4 +1,4 @@
-from enstools.compression.emulators.LibpressioEmulator import libpressio_is_available
+from enstools.compression.emulators.libpressio_emulator import libpressio_is_available
 from enstools.encoding.api import VariableEncoding
 from utils import TestClass
 import numpy as np
