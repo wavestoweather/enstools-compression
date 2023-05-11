@@ -50,7 +50,7 @@ install-from-testpypi:
     - apt install -yq git vim python3 python3-pip python3-venv
   script:
     - pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ enstools-compression --break-system-packages
-    - python -c "from enstools.compression import api"
+    - python3 -c "from enstools.compression import api"
 
 
 deploy-to-pypi:
@@ -83,4 +83,4 @@ install-from-pypi:
     - apt install -yq git vim python3 python3-pip python3-venv
   script:
     - pip install enstools-compression --break-system-packages
-    - python -c "from enstools.compression import api"
+    - python3 -c "from enstools.compression import api"
