@@ -45,6 +45,10 @@ setup(name="enstools-compression",
           "hdf5plugin>=4.0.0",
           "netCDF4",
       ],
+      extras_require={
+          'examples': ['pooch']
+      },
+
       entry_points={
           'console_scripts': [
               'enstools-compression=enstools.compression.cli:main'
