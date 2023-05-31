@@ -46,7 +46,12 @@ setup(name="enstools-compression",
           "netCDF4",
       ],
       extras_require={
-          'examples': ['pooch']
+          'examples': ['pooch'],
+          'test': [
+              "pytest",
+              "pytest-mock",
+              "pooch",
+          ],
       },
 
       entry_points={
