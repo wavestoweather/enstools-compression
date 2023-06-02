@@ -18,6 +18,7 @@ from enstools.compression.compressor import drop_variables
 from enstools.io import read
 from .analysis_options import AnalysisOptions, AnalysisParameters
 from .analyze_data_array import analyze_data_array, ANALYSIS_DIAGNOSTIC_METRICS, COMPRESSION_RATIO_LABEL
+from ..errors import ConditionsNotFulfilledError
 
 logger = logging.getLogger("enstools.compression.analysis")
 
@@ -67,7 +68,8 @@ def select_optimal_encoding_based_on_compression_ratio(encodings: dict, metrics:
     for variable in variables:
         best_compression_ratio = 0
         for combination in combinations:
-            if metrics[combination][variable][COMPRESSION_RATIO_LABEL] > best_compression_ratio:
+            if variable in metrics[combination] and \
+                    metrics[combination][variable][COMPRESSION_RATIO_LABEL] > best_compression_ratio:
                 best_compression_ratio = metrics[combination][variable][COMPRESSION_RATIO_LABEL]
                 best_combination[variable] = combination
 
@@ -145,18 +147,21 @@ def find_encodings_for_all_combinations(dataset: xarray.Dataset, options: Analys
                 combination_metrics[var] = {COMPRESSION_RATIO_LABEL: 1.0}
                 continue
 
-            variable_encoding, variable_metrics = analyze_data_array(
-                data_array=dataset[var],
-                options=AnalysisOptions(compressor, mode, thresholds=options.thresholds)
-            )
-            combination_encoding[var] = variable_encoding
-            combination_metrics[var] = variable_metrics
-            # (dataset, variable_name, thresholds, compressor_name, mode)
-            logger.debug("%s %s  CR:%.1f",
-                         var,
-                         variable_encoding,
-                         variable_metrics[COMPRESSION_RATIO_LABEL],
-                         )
+            try:
+                variable_encoding, variable_metrics = analyze_data_array(
+                    data_array=dataset[var],
+                    options=AnalysisOptions(compressor, mode, thresholds=options.thresholds)
+                )
+                combination_encoding[var] = variable_encoding
+                combination_metrics[var] = variable_metrics
+                # (dataset, variable_name, thresholds, compressor_name, mode)
+                logger.debug("%s %s  CR:%.1f",
+                             var,
+                             variable_encoding,
+                             variable_metrics[COMPRESSION_RATIO_LABEL],
+                             )
+            except ConditionsNotFulfilledError:
+                ...
         encodings[combination] = combination_encoding
         metrics[combination] = combination_metrics
 
