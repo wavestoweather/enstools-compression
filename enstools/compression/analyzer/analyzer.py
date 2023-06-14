@@ -95,7 +95,7 @@ def select_optimal_encoding_based_on_quality_metrics(encodings: dict, metrics: d
         best_metrics = {met: -1.0 for met in ANALYSIS_DIAGNOSTIC_METRICS}
         for combination in combinations:
             for metric in ANALYSIS_DIAGNOSTIC_METRICS:
-                if metric in metrics[combination][variable]:
+                if variable in metrics[combination] and metric in metrics[combination][variable]:
                     if metrics[combination][variable][metric] > best_metrics[metric]:
                         best_metrics[metric] = metrics[combination][variable][metric]
                         best_combination[variable] = combination
