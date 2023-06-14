@@ -85,6 +85,19 @@ class TestAnalyzer(TestClass):
                           compressor="zfp",
                           mode="rate",
                           )
+    def test_rmse(self):
+        from enstools.compression.api import analyze_files
+        input_tempdir = self.input_directory_path
+        # Check that the compression without specifying compression parameters works
+        datasets = ["dataset_%iD.nc" % dimension for dimension in range(1, 4)]
+        for ds in datasets:
+            input_path = input_tempdir / ds
+            analyze_files(file_paths=[input_path],
+                          constrains="normalized_root_mean_square_error:1e-5",
+                          # Keep the analysis to a single compressor and mode to speed up tests
+                          compressor="zfp",
+                          mode="rate",
+                          )
 
     def test_wrong_constrain(self):
         from enstools.compression.api import analyze_files
@@ -115,7 +128,7 @@ class TestAnalyzer(TestClass):
 
         # Check that the analysis using a custom metric defined with a plugin works
         datasets = ["dataset_%iD.nc" % dimension for dimension in range(1, 4)]
-        constrains = f"{custom_metric_name}:.1"
+        constrains = f"{custom_metric_name}:1e-5"
 
         for ds in datasets:
             input_path = input_tempdir / ds
@@ -154,7 +167,7 @@ class TestAnalyzer(TestClass):
 
         # Check that the analysis using a custom metric defined with a plugin works
         datasets = ["dataset_%iD.nc" % dimension for dimension in range(1, 4)]
-        constrains = f"{custom_metric_name}:3"
+        constrains = f"{custom_metric_name}:1e-5"
 
         for ds in datasets:
             input_path = input_tempdir / ds
