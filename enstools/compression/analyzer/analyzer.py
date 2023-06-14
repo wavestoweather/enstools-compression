@@ -245,7 +245,12 @@ def analyze_dataset(dataset: xarray.Dataset,
         dataset = dataset.fillna(fill_na)
 
     options = AnalysisOptions(compressor=compressor, mode=mode, constrains=constrains)
-    return find_optimal_encoding(dataset, options)
+    encodings, metrics = find_optimal_encoding(dataset, options)
+    if not encodings:
+        raise ConditionsNotFulfilledError(
+            "It was not possible to find a combination that fulfills the constrains provided"
+        )
+    return encodings, metrics
 
 
 def save_encoding(encoding: dict, output_file: Union[Path, str, None] = None, file_format: str = "yaml"):
