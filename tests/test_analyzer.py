@@ -115,7 +115,7 @@ class TestAnalyzer(TestClass):
 
         # Check that the analysis using a custom metric defined with a plugin works
         datasets = ["dataset_%iD.nc" % dimension for dimension in range(1, 4)]
-        constrains = f"{custom_metric_name}:3"
+        constrains = f"{custom_metric_name}:.1"
 
         for ds in datasets:
             input_path = input_tempdir / ds

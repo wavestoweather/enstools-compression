@@ -102,7 +102,7 @@ class TestCommandLineInterface(TestClass):
         with open(plugin_path, "w") as f:
             f.write(function_code)
 
-        commands = ["_", "analyze", str(file_path), "--constrains", f"{plugin_name}:4", "--plugins",
+        commands = ["_", "analyze", str(file_path), "--constrains", f"{plugin_name}:.1", "--plugins",
                     str(plugin_path), "-c", "zfp"]
         mocker.patch("sys.argv", commands)
         enstools.compression.cli.main()
