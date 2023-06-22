@@ -14,14 +14,19 @@ data = create_data()
 
 def setup_main_frame():
     st.title("Welcome to the :green[enstools-compression] playground!")
+    st.markdown("Find more information our [**GitHub repository**](https://github.com/wavestoweather/enstools-compression)"
+                " or in our [**documentation**](https://enstools-compression.readthedocs.io)")
     with st.sidebar:
         select_dataset(data)
         slice_selection = select_slice(data)
 
     st.markdown("---")
+    if data.reference_da is None:
+        st.markdown("## :point_left: Please :red[select a dataset] using the left sidebar!")
+        return
+
     options = ["Compression", "Advanced Compression", "Analysis"]
     basic, advanced, analysis = st.tabs(options)
-
     with basic:
         basic_section(data=data, slice_selection=slice_selection)
         with st.spinner():
