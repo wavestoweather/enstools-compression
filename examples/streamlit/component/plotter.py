@@ -1,6 +1,7 @@
 import streamlit as st
 import matplotlib.pyplot as plt
 
+
 def plot_comparison(data, slice_selection):
     col1, col2, col3, *others = st.columns(3)
 
@@ -19,7 +20,6 @@ def plot_comparison(data, slice_selection):
     slice_selection = new_slice
 
     if data.reference_da is not None:
-        print(f"{slice_selection=}")
         slice_selection = {key: (value if key != "lat" else slice(value.stop, value.start)) for key, value in
                            slice_selection.items()}
 
@@ -33,8 +33,8 @@ def plot_comparison(data, slice_selection):
 
         if non_slices:
             reference_slice = reference_slice.sel(**non_slices, method="nearest")
-        print(reference_slice)
         try:
+            plt.figure()
             reference_slice.plot()
             fig1 = plt.gcf()
             with col1:
@@ -75,9 +75,6 @@ def plot_comparison(data, slice_selection):
                 st.pyplot(fig3)
         except TypeError:
             pass
-
-
-
 
     else:
         st.text("Compress the data to show the plot!")
