@@ -18,6 +18,7 @@ from enstools.compression.compressor import drop_variables
 from enstools.io import read
 from .analysis_options import AnalysisOptions, AnalysisParameters
 from .analyze_data_array import analyze_data_array, ANALYSIS_DIAGNOSTIC_METRICS, COMPRESSION_RATIO_LABEL
+from ..errors import ConditionsNotFulfilledError
 
 logger = logging.getLogger("enstools.compression.analysis")
 
@@ -67,7 +68,8 @@ def select_optimal_encoding_based_on_compression_ratio(encodings: dict, metrics:
     for variable in variables:
         best_compression_ratio = 0
         for combination in combinations:
-            if metrics[combination][variable][COMPRESSION_RATIO_LABEL] > best_compression_ratio:
+            if variable in metrics[combination] and \
+                    metrics[combination][variable][COMPRESSION_RATIO_LABEL] > best_compression_ratio:
                 best_compression_ratio = metrics[combination][variable][COMPRESSION_RATIO_LABEL]
                 best_combination[variable] = combination
 
@@ -93,7 +95,7 @@ def select_optimal_encoding_based_on_quality_metrics(encodings: dict, metrics: d
         best_metrics = {met: -1.0 for met in ANALYSIS_DIAGNOSTIC_METRICS}
         for combination in combinations:
             for metric in ANALYSIS_DIAGNOSTIC_METRICS:
-                if metric in metrics[combination][variable]:
+                if variable in metrics[combination] and metric in metrics[combination][variable]:
                     if metrics[combination][variable][metric] > best_metrics[metric]:
                         best_metrics[metric] = metrics[combination][variable][metric]
                         best_combination[variable] = combination
@@ -145,18 +147,21 @@ def find_encodings_for_all_combinations(dataset: xarray.Dataset, options: Analys
                 combination_metrics[var] = {COMPRESSION_RATIO_LABEL: 1.0}
                 continue
 
-            variable_encoding, variable_metrics = analyze_data_array(
-                data_array=dataset[var],
-                options=AnalysisOptions(compressor, mode, thresholds=options.thresholds)
-            )
-            combination_encoding[var] = variable_encoding
-            combination_metrics[var] = variable_metrics
-            # (dataset, variable_name, thresholds, compressor_name, mode)
-            logger.debug("%s %s  CR:%.1f",
-                         var,
-                         variable_encoding,
-                         variable_metrics[COMPRESSION_RATIO_LABEL],
-                         )
+            try:
+                variable_encoding, variable_metrics = analyze_data_array(
+                    data_array=dataset[var],
+                    options=AnalysisOptions(compressor, mode, thresholds=options.thresholds)
+                )
+                combination_encoding[var] = variable_encoding
+                combination_metrics[var] = variable_metrics
+                # (dataset, variable_name, thresholds, compressor_name, mode)
+                logger.debug("%s %s  CR:%.1f",
+                             var,
+                             variable_encoding,
+                             variable_metrics[COMPRESSION_RATIO_LABEL],
+                             )
+            except ConditionsNotFulfilledError:
+                ...
         encodings[combination] = combination_encoding
         metrics[combination] = combination_metrics
 
@@ -240,7 +245,12 @@ def analyze_dataset(dataset: xarray.Dataset,
         dataset = dataset.fillna(fill_na)
 
     options = AnalysisOptions(compressor=compressor, mode=mode, constrains=constrains)
-    return find_optimal_encoding(dataset, options)
+    encodings, metrics = find_optimal_encoding(dataset, options)
+    if not encodings:
+        raise ConditionsNotFulfilledError(
+            "It was not possible to find a combination that fulfills the constrains provided"
+        )
+    return encodings, metrics
 
 
 def save_encoding(encoding: dict, output_file: Union[Path, str, None] = None, file_format: str = "yaml"):

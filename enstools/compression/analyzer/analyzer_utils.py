@@ -6,6 +6,7 @@ import logging
 from typing import List, Dict
 
 import xarray
+import numpy as np
 
 from enstools.compression.analyzer.analysis_options import AnalysisOptions
 from enstools.compression.metrics import DataArrayMetrics
@@ -23,7 +24,8 @@ def get_metrics(reference_data: xarray.DataArray, recovered_data: xarray.DataArr
     :return: a dictionary with the requested metrics
     """
     metrics = DataArrayMetrics(reference_data, recovered_data)
-    return {metric: float(metrics[metric]) for metric in metric_names if metric != "compression_ratio"}
+    # TODO: Is the average the proper thing to use here?
+    return {metric: float(np.average(metrics[metric])) for metric in metric_names if metric != "compression_ratio"}
 
 
 def check_compression_ratio(compression_ratio: float, thresholds: dict):
@@ -148,6 +150,7 @@ def continuous_bisection_method(parameter_range: tuple,
                                 retry_repeated=5,
                                 threshold=0.1,
                                 direct_relation=True,
+                                results=None,
                                 ):
     """
     Recursively refine a parameter range by evaluating the parameter that lies in the middle of the range.
@@ -168,8 +171,13 @@ def continuous_bisection_method(parameter_range: tuple,
     :param direct_relation: If True, the relation between the function and the parameter is direct, that is,
                             increasing the parameter will increase the function value. If False, the relation is
                             inverse, that is, increasing the parameter will decrease the function value.
+    :param results: A dictionary that stores the function values for each parameter that has been evaluated.
+
     :return: The best value of the parameter that meets the exit conditions.
     """
+
+    if results is None:
+        results = {}
     # Get start and end from parameter range
     start, end = parameter_range
 
@@ -184,23 +192,22 @@ def continuous_bisection_method(parameter_range: tuple,
     # TODO: use logging and a debug mode to print this kind of things
     logging.debug("start=%.2e,end=%.2e value_at_middle=%f", start, end, float(value_at_middle))
 
-    # If the value at the middle is positive (all thresholds are fulfilled) we can return the parameter at the middle,
-    # otherwise select the safer one.
-    parameter_to_return = middle if value_at_middle > 0.0 else end
+    # Save result
+    results[middle] = value_at_middle
 
     # In case the accuracy exit condition is reached, return the parameter value at that point
-    if 0.0 <= value_at_middle < threshold:
-        return parameter_to_return
+    if 0.0 <= value_at_middle < threshold or depth >= max_depth or\
+            (value_at_middle == last_value and retry_repeated == 0):
+        positive_results = {k: v for k,v in results.items() if v > 0}
+        if positive_results:
+            return min(positive_results, key=positive_results.get)
+        else:
+            return middle
+
 
     # If the value is the same that the last try, we can retry few times
     if value_at_middle == last_value:
-        if retry_repeated == 0:
-            return parameter_to_return
         retry_repeated -= 1
-
-    # In case having reached the maximum depth, return the proper value
-    if depth >= max_depth:
-        return parameter_to_return
 
     # # Otherwise, set new parameter range and call the function again
     if comparison(value_at_middle, direct_relation=direct_relation):
@@ -216,6 +223,7 @@ def continuous_bisection_method(parameter_range: tuple,
                                        retry_repeated=retry_repeated,
                                        threshold=threshold,
                                        direct_relation=direct_relation,
+                                       results=results
                                        )
 
 
@@ -228,6 +236,7 @@ def discrete_bisection_method(parameters_list: list,
                               retry_repeated=5,
                               threshold=0.1,
                               direct_relation=True,
+                              results=None,
                               ):
     """
     Apply the bisection method on a set of discrete parameters.
@@ -243,11 +252,16 @@ def discrete_bisection_method(parameters_list: list,
     :param threshold: The threshold for the method exit condition.
     :param direct_relation: Boolean indicating whether the relation between the parameter and the function value is
     direct or inverse.
+    :param results: A dictionary that stores the function values for each parameter that has been evaluated.
 
     :return: The parameter value that satisfies the constrain function.
 
     :raises: Exception if the maximum depth is reached.
     """
+
+    if results is None:
+        results = {}
+
     middle_index = len(parameters_list) // 2
     middle = parameters_list[middle_index]
 
@@ -260,13 +274,20 @@ def discrete_bisection_method(parameters_list: list,
                   middle,
                   float(value_at_middle))
 
+    results[middle] = value_at_middle
+
     # If the value at the middle is positive (all thresholds are fulfilled) we can return the parameter at the middle,
     # otherwise select the safer one.
     parameter_to_return = middle if value_at_middle > 0.0 else parameters_list[-1]
 
     # In case the accuracy exit condition is reached, return the parameter value at that point
-    if 0.0 <= value_at_middle < threshold:
-        return parameter_to_return
+    if 0.0 <= value_at_middle < threshold or depth >= max_depth or\
+            (value_at_middle == last_value and retry_repeated == 0):
+        positive_results = {k: v for k,v in results.items() if v > 0}
+        if positive_results:
+            return min(positive_results, key=positive_results.get)
+        else:
+            return middle
 
     # If the value is the same that the last try, we can retry few times
     if value_at_middle == last_value:
@@ -274,9 +295,6 @@ def discrete_bisection_method(parameters_list: list,
             return parameter_to_return
         retry_repeated -= 1
 
-    # In case having reached the maximum depth, return the proper value
-    if depth >= max_depth:
-        return parameter_to_return
 
     # # Otherwise, set new parameter range and call the function again
     if comparison(value_at_middle, direct_relation=direct_relation):
@@ -293,4 +311,5 @@ def discrete_bisection_method(parameters_list: list,
                                      retry_repeated=retry_repeated,
                                      threshold=threshold,
                                      direct_relation=direct_relation,
+                                     results=results,
                                      )

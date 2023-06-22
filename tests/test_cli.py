@@ -102,7 +102,7 @@ class TestCommandLineInterface(TestClass):
         with open(plugin_path, "w") as f:
             f.write(function_code)
 
-        commands = ["_", "analyze", str(file_path), "--constrains", f"{plugin_name}:4", "--plugins",
+        commands = ["_", "analyze", str(file_path), "--constrains", f"{plugin_name}:1e-5", "--plugins",
                     str(plugin_path), "-c", "zfp"]
         mocker.patch("sys.argv", commands)
         enstools.compression.cli.main()
@@ -131,7 +131,7 @@ class TestCommandLineInterface(TestClass):
         with open(plugin_path, "w") as f:
             f.write(function_code)
 
-        commands = ["_", "analyze", str(file_path), "--constrains", f"{plugin_name}:4", "--plugins", str(plugin_path),
+        commands = ["_", "analyze", str(file_path), "--constrains", f"{plugin_name}:1e-5", "--plugins", str(plugin_path),
                     "-c", "sz"]
         mocker.patch("sys.argv", commands)
         enstools.compression.cli.main()

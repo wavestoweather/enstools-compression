@@ -86,6 +86,8 @@ class FilterEmulator(Emulator):
         encoding = dict(self.compression)
         if "chunksizes" in encoding:
             encoding["chunks"] = encoding.pop("chunksizes")
+        else:
+            encoding["chunks"] = uncompressed_data.shape
 
         # Initialize file object
         with io.BytesIO() as bio:
