@@ -38,6 +38,8 @@ class DataContainer:
     def compress(self, compression):
         self.compressed_da = self.reference_da.compression(compression)
 
+    def __hash__(self):
+        return hash(self.reference_da.name)
 
 @st.cache_resource
 def create_data():
