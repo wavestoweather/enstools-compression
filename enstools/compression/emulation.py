@@ -115,8 +115,8 @@ def emulate_compression_on_numpy_array(data: numpy.ndarray, compression_specific
 
     """
 
-    if isinstance(compression_specification, (LosslessEncoding, NullEncoding)):
-        return data, {}
+    if isinstance(compression_specification, NullEncoding):
+        return data, {"compression_ratio": 1}
 
     emulator_backend = DefaultEmulator
 
