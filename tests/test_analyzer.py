@@ -15,6 +15,32 @@ class TestAnalyzer(TestClass):
             input_path = input_tempdir / ds
             analyze_files(file_paths=[input_path])
 
+    def test_analyzer_constant_array(self):
+        import enstools.compression.xr_accessor  # noqa
+        import numpy as np
+        import xarray as xr
+
+        shape = (100, 100, 100)
+        data = np.zeros(shape)
+        data_array = xr.DataArray(data)
+        # Expect a warning about constant values
+        with pytest.warns(UserWarning, match="All values in the variable .* are constant."):
+            specs, metrics = data_array.compression.analyze()
+
+        data_array.compression(specs)
+
+    def test_analyzer_without_lat_lon(self):
+        import enstools.compression.xr_accessor  # noqa
+        import numpy as np
+        import xarray as xr
+
+        shape = (100, 100, 100)
+        data = np.random.random(size=shape)
+        data_array = xr.DataArray(data)
+        specs, metrics = data_array.compression.analyze()
+        data_array.compression(specs)
+
+
     def test_zfp_analyzer(self):
         from enstools.compression.api import analyze_files
         input_tempdir = self.input_directory_path
@@ -60,8 +86,9 @@ class TestAnalyzer(TestClass):
 
             for var in metrics:
                 if abs(metrics[var][cr_label] - thresholds[cr_label]) > TOLERANCE:
-                    raise AssertionError(f"Case:{input_path.name}.The resulting compression ratio of {metrics[var][cr_label]:.2f}"
-                                         f"x is not close enough to the target of {thresholds[cr_label]:.2f}")
+                    raise AssertionError(
+                        f"Case:{input_path.name}.The resulting compression ratio of {metrics[var][cr_label]:.2f}"
+                        f"x is not close enough to the target of {thresholds[cr_label]:.2f}")
 
     def test_sz_analyzer(self):
         from enstools.compression.api import analyze_files
@@ -85,6 +112,7 @@ class TestAnalyzer(TestClass):
                           compressor="zfp",
                           mode="rate",
                           )
+
     def test_rmse(self):
         from enstools.compression.api import analyze_files
         input_tempdir = self.input_directory_path
